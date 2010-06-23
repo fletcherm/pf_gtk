@@ -23,3 +23,7 @@ void test_ApplicationModel_StartsTheApplication(void)
   TEST_ASSERT(ApplicationModel_Run());
   TEST_ASSERT(application_starts_called);
 }
+
+void test_ApplicationModel_ComputeSquare_GivesASquare() {
+  TEST_ASSERT_EQUAL(81, ApplicationModel_ComputeSquare());
+}

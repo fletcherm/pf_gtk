@@ -3,5 +3,6 @@
 
 void ApplicationConductor_RegisterEvents();
 void ApplicationConductor_ApplicationStartCallback();
+void ApplicationConductor_ButtonClickedCallback();
 
 #endif // _ApplicationConductor_H

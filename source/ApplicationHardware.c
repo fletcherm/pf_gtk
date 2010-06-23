@@ -1,6 +1,15 @@
 #include <gtk/gtk.h>
 #include "ApplicationHardware.h"
 
+static void(*whenButtonClicked)(void) = 0;
+static void buttonClicked(GtkWidget *widget, gpointer data)
+{
+  whenButtonClicked();
+}
+void ApplicationHardware_WhenButtonClicked(void(*callback)(void)) {
+  whenButtonClicked = callback;
+}
+
 static void destroy(GtkWidget *widget, gpointer data)
 {
     gtk_main_quit();
@@ -8,6 +17,7 @@ static void destroy(GtkWidget *widget, gpointer data)
 
 void ApplicationHardware_Build() {
   GtkWidget *button = gtk_button_new_with_label("Hello World");
+  g_signal_connect(button, "clicked", G_CALLBACK(buttonClicked), NULL);
 
   GtkWidget *box = gtk_vbox_new(TRUE, 0);
   gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
