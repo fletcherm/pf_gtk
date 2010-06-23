@@ -1,1 +1,0 @@
-class TheCatLineage; end
