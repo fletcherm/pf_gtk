@@ -7,6 +7,9 @@ task :run => "build:release" do
   sh "build/artifacts/release/mch_gui"
 end
 
+desc "build it"
+task :build => "build:release"
+
 namespace :proto do
   def gtk_cflags
     `pkg-config --cflags --libs gtk+-2.0`.strip
