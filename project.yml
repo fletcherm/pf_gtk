@@ -45,7 +45,7 @@
     Status_T: INT
 
 :plugins:
-  :base_path: ceedling/plugins
+  :base_path: vendor/ceedling/plugins
   :enabled:
     - stdout_pretty_tests_report
     - module_generator

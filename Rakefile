@@ -1,4 +1,4 @@
-load "ceedling/lib/rakefile.rb"
+load "vendor/ceedling/lib/rakefile.rb"
 
 task :default => "build:release"
 
