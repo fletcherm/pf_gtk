@@ -6,7 +6,7 @@
   :build_root: build
 
 :release_build:
-  :output: hello
+  :output: mch_gui
   :enabled: yes
 
 :module_generator:
@@ -54,6 +54,7 @@
   :test_compiler: &compiler_argz
     :executable: gcc
     :arguments: 
+      - -I"$": COLLECTION_PATHS_TEST_AND_SOURCE_AND_INCLUDE
       - -pthread
       - -D_REENTRANT
       - -I/usr/include/gtk-2.0
