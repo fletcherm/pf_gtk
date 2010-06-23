@@ -1,0 +1,44 @@
+---
+
+:project:
+  :use_exceptions: FALSE
+  :use_preprocessor: TRUE
+  :use_auxiliary_dependencies: TRUE
+  :build_root: build
+
+:paths:
+  :test:
+    - tests/**
+  :source:
+    - source/**
+
+:defines:
+  :common: &common_defines
+  :test:
+    - *common_defines
+#    - CMOCK_MEM_PTR_AS_INT="unsigned long"
+  :release:
+    - *common_defines
+
+:test_runner:
+  :includes:
+    - types.h
+
+:cmock:
+  :mock_prefix: mock_
+  :when_no_prototypes: :warn
+  :enforce_strict_ordering: TRUE
+  :includes:
+    - types.h
+  :plugins:
+    - ignore
+  :treat_as:
+    UINT: INT
+    Status_T: INT
+
+:plugins:
+  :base_path: ceedling/plugins
+  :enabled:
+    - stdout_pretty_tests_report
+
+...
