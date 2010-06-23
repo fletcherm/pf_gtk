@@ -1,6 +1,6 @@
 load "vendor/ceedling/lib/rakefile.rb"
 
-task :default => "build:release"
+task :default => :run
 
 desc "run hello"
 task :run => "build:release" do
