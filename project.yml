@@ -1,10 +1,96 @@
 ---
-
 :project:
   :use_exceptions: FALSE
   :use_preprocessor: TRUE
   :use_auxiliary_dependencies: TRUE
   :build_root: build
+
+:release_build:
+  :output: hello
+  :enabled: yes
+
+:module_generator:
+  :project_root: '.'
+  :source_root: source
+  :test_root: tests
+
+:tools:
+  :test_compiler: &compiler_argz
+    :executable: gcc
+    :arguments: 
+      - -pthread
+      - -D_REENTRANT
+      - -I/usr/include/gtk-2.0
+      - -I/usr/lib/gtk-2.0/include
+      - -I/usr/include/atk-1.0
+      - -I/usr/include/cairo
+      - -I/usr/include/pango-1.0
+      - -I/usr/include/gio-unix-2.0/
+      - -I/usr/include/glib-2.0
+      - -I/usr/lib/glib-2.0/include
+      - -I/usr/include/pixman-1
+      - -I/usr/include/freetype2
+      - -I/usr/include/directfb
+      - -I/usr/include/libpng12
+      - -pthread
+      - -lgtk-x11-2.0
+      - -lgdk-x11-2.0
+      - -latk-1.0
+      - -lgio-2.0
+      - -lpangoft2-1.0
+      - -lgdk_pixbuf-2.0
+      - -lm
+      - -lpangocairo-1.0
+      - -lcairo
+      - -lpango-1.0
+      - -lfreetype
+      - -lfontconfig
+      - -lgobject-2.0
+      - -lgmodule-2.0
+      - -lgthread-2.0
+      - -lrt
+      - -lglib-2.0
+      - -c ${1} 
+      - -o ${2} 
+  :test_linker: &linker_argz
+    :executable: gcc
+    :arguments: 
+      - -pthread
+      - -D_REENTRANT
+      - -I/usr/include/gtk-2.0
+      - -I/usr/lib/gtk-2.0/include
+      - -I/usr/include/atk-1.0
+      - -I/usr/include/cairo
+      - -I/usr/include/pango-1.0
+      - -I/usr/include/gio-unix-2.0/
+      - -I/usr/include/glib-2.0
+      - -I/usr/lib/glib-2.0/include
+      - -I/usr/include/pixman-1
+      - -I/usr/include/freetype2
+      - -I/usr/include/directfb
+      - -I/usr/include/libpng12
+      - -pthread
+      - -lgtk-x11-2.0
+      - -lgdk-x11-2.0
+      - -latk-1.0
+      - -lgio-2.0
+      - -lpangoft2-1.0
+      - -lgdk_pixbuf-2.0
+      - -lm
+      - -lpangocairo-1.0
+      - -lcairo
+      - -lpango-1.0
+      - -lfreetype
+      - -lfontconfig
+      - -lgobject-2.0
+      - -lgmodule-2.0
+      - -lgthread-2.0
+      - -lrt
+      - -lglib-2.0
+      - ${1}
+      - -o ${2} 
+  :release_compiler: *compiler_argz
+  :release_linker: *linker_argz
 
 :paths:
   :test:
@@ -40,5 +126,4 @@
   :base_path: ceedling/plugins
   :enabled:
     - stdout_pretty_tests_report
-
 ...
