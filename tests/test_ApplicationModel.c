@@ -24,6 +24,10 @@ void test_ApplicationModel_StartsTheApplication(void)
   TEST_ASSERT(application_starts_called);
 }
 
-void test_ApplicationModel_ComputeSquare_GivesASquare() {
-  TEST_ASSERT_EQUAL(81, ApplicationModel_ComputeSquare());
+void test_ApplicationModel_Divide_WithEvenNumbers()
+{
+  TEST_ASSERT_EQUAL(4, ApplicationModel_Divide(8, 2));
+  TEST_ASSERT_EQUAL(-2, ApplicationModel_Divide(-4, 2));
+  TEST_ASSERT_EQUAL(2, ApplicationModel_Divide(-8, -4));
+  TEST_ASSERT_EQUAL(-3, ApplicationModel_Divide(9, -3));
 }

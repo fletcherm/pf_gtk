@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include "ApplicationHardware.h"
 
 static void(*whenCalculateClicked)(void) = 0;
@@ -10,15 +11,14 @@ void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
   whenCalculateClicked = callback;
 }
 
-static void destroy(GtkWidget *widget, gpointer data)
-{
-    gtk_main_quit();
-}
+GtkWidget *dividend;
+GtkWidget *divisor;
+GtkWidget *result;
 
 void ApplicationHardware_Build() {
   // divisor stuff
   GtkWidget *divisorLabel = gtk_label_new("Divisor");
-  GtkWidget *divisor = gtk_entry_new();
+  divisor = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(divisor), 10);
 
   GtkWidget *divisorBox = gtk_hbox_new(TRUE, 0);
@@ -31,7 +31,7 @@ void ApplicationHardware_Build() {
 
   // dividend stuff
   GtkWidget *dividendLabel = gtk_label_new("Dividend");
-  GtkWidget *dividend = gtk_entry_new();
+  dividend = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(dividend), 10);
 
   GtkWidget *dividendBox = gtk_hbox_new(TRUE, 0);
@@ -44,8 +44,9 @@ void ApplicationHardware_Build() {
 
   // result stuff
   GtkWidget *resultLabel = gtk_label_new("Result");
-  GtkWidget *result = gtk_entry_new();
+  result = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(result), 10);
+  gtk_editable_set_editable(GTK_EDITABLE(result), FALSE);
 
   GtkWidget *resultBox = gtk_hbox_new(TRUE, 0);
   gtk_box_pack_start(GTK_BOX(resultBox), resultLabel, FALSE, FALSE, 0);
@@ -79,6 +80,20 @@ void ApplicationHardware_Build() {
 
   // tie the room together
   gtk_container_add(GTK_CONTAINER(window), bigBox);
+}
+
+int ApplicationHardware_GetDivisor() {
+  return atoi(gtk_entry_get_text(GTK_ENTRY(divisor)));
+}
+
+int ApplicationHardware_GetDividend() {
+  return atoi(gtk_entry_get_text(GTK_ENTRY(dividend)));
+}
+
+void ApplicationHardware_SetQuotient(int q) {
+  char quotient[10];
+  sprintf(quotient, "%d", q);
+  gtk_entry_set_text(GTK_ENTRY(result), quotient);
 }
 
 void ApplicationHardware_Start() {

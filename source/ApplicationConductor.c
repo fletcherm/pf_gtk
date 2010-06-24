@@ -12,5 +12,6 @@ void ApplicationConductor_ApplicationStartCallback() {
 }
 
 void ApplicationConductor_CalculateClickedCallback() {
-  int square = ApplicationModel_ComputeSquare();
+  int result = ApplicationModel_Divide(ApplicationHardware_GetDivisor(), ApplicationHardware_GetDividend());
+  ApplicationHardware_SetQuotient(result);
 }

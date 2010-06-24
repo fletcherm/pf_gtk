@@ -10,6 +10,6 @@ int ApplicationModel_Run() {
   applicationStartsCallback();
 }
 
-int ApplicationModel_ComputeSquare() {
-  return 9*9;
+int ApplicationModel_Divide(int dividend, int divisor) {
+  return dividend / divisor;
 }

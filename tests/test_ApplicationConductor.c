@@ -21,8 +21,11 @@ void test_ApplicationConductor_InitializesTheApplicationAndStartsTheGui(void)
   ApplicationConductor_ApplicationStartCallback();
 }
 
-void test_ApplicationConductor_CalculatesTheSquareWhenTheButtonIsClicked() {
-  ApplicationModel_ComputeSquare_ExpectAndReturn(25);
+void test_ApplicationConductor_CalculatesTheQuotientWhenClicked() {
+  ApplicationHardware_GetDividend_ExpectAndReturn(7);
+  ApplicationHardware_GetDivisor_ExpectAndReturn(21);
+  ApplicationModel_Divide_ExpectAndReturn(21, 7, 3);
+  ApplicationHardware_SetQuotient_Expect(3);
 
   ApplicationConductor_CalculateClickedCallback();
 }

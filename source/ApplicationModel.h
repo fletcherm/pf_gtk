@@ -4,6 +4,6 @@
 void ApplicationModel_WhenApplicationStarts(void(*callback)(void));
 
 int ApplicationModel_Run();
-int ApplicationModel_ComputeSquare();
+int ApplicationModel_Divide(int, int);
 
 #endif // _ApplicationModel_H
