@@ -1,3 +1,4 @@
+#include "types.h"
 #include "ApplicationConductor.h"
 #include "ApplicationModel.h"
 
@@ -12,6 +13,13 @@ void ApplicationConductor_ApplicationStartCallback() {
 }
 
 void ApplicationConductor_CalculateClickedCallback() {
-  int result = ApplicationModel_Divide(ApplicationHardware_GetDivisor(), ApplicationHardware_GetDividend());
+  int divisor = ApplicationHardware_GetDivisor();
+  int dividend = ApplicationHardware_GetDividend();
+  if (ApplicationModel_CheckArgs(divisor, dividend) == FALSE) {
+    ApplicationHardware_ShowError();
+    return;
+  }
+  int result = ApplicationModel_Divide(divisor,dividend);
+  ApplicationHardware_HideError();
   ApplicationHardware_SetQuotient(result);
 }

@@ -8,5 +8,7 @@ void ApplicationHardware_Start();
 int ApplicationHardware_GetDivisor();
 int ApplicationHardware_GetDividend();
 void ApplicationHardware_SetQuotient(int);
+void ApplicationHardware_HideError();
+void ApplicationHardware_ShowError();
 
 #endif

@@ -4,6 +4,7 @@
 void ApplicationModel_WhenApplicationStarts(void(*callback)(void));
 
 int ApplicationModel_Run();
-int ApplicationModel_Divide(int, int);
+int ApplicationModel_Divide(int divisor, int dividend);
+int ApplicationModel_CheckArgs(int divisor, int dividend);
 
 #endif // _ApplicationModel_H

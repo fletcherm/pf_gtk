@@ -1,3 +1,4 @@
+#include "types.h"
 #include "ApplicationModel.h"
 
 static void(*applicationStartsCallback)(void) = 0;
@@ -12,4 +13,8 @@ int ApplicationModel_Run() {
 
 int ApplicationModel_Divide(int dividend, int divisor) {
   return dividend / divisor;
+}
+
+int ApplicationModel_CheckArgs(int divisor, int dividend) {
+  return (dividend == 0) ? FALSE : TRUE;
 }

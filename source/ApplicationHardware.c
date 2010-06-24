@@ -14,6 +14,7 @@ void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
 GtkWidget *dividend;
 GtkWidget *divisor;
 GtkWidget *result;
+GtkWidget *errorLabel;
 
 void ApplicationHardware_Build() {
   // divisor stuff
@@ -61,12 +62,16 @@ void ApplicationHardware_Build() {
   g_signal_connect(calculateButton, "clicked", G_CALLBACK(calculateClicked), NULL);
   gtk_widget_show(calculateButton);
 
+  // error label stuff
+  errorLabel = gtk_label_new("Cannot compute with these arguments.");
+
   // box it up
   GtkWidget *bigBox = gtk_vbox_new(TRUE, 0);
   gtk_box_pack_start(GTK_BOX(bigBox), divisorBox, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(bigBox), dividendBox, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(bigBox), resultBox, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(bigBox), calculateButton, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(bigBox), errorLabel, FALSE, FALSE, 0);
   gtk_widget_show(bigBox);
 
   // window stuff
@@ -94,6 +99,14 @@ void ApplicationHardware_SetQuotient(int q) {
   char quotient[10];
   sprintf(quotient, "%d", q);
   gtk_entry_set_text(GTK_ENTRY(result), quotient);
+}
+
+void ApplicationHardware_HideError() {
+  gtk_widget_hide(errorLabel);
+}
+
+void ApplicationHardware_ShowError() {
+  gtk_widget_show(errorLabel);
 }
 
 void ApplicationHardware_Start() {

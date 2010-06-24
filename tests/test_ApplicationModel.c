@@ -31,3 +31,21 @@ void test_ApplicationModel_Divide_WithEvenNumbers()
   TEST_ASSERT_EQUAL(2, ApplicationModel_Divide(-8, -4));
   TEST_ASSERT_EQUAL(-3, ApplicationModel_Divide(9, -3));
 }
+
+void test_ApplicationModel_Divide_WithNonEvenNumber()
+{
+  TEST_IGNORE();
+}
+
+void test_ApplicationModel_CheckArgs_ArgsAreOK()
+{
+  TEST_ASSERT(ApplicationModel_CheckArgs(1, 1));
+  TEST_ASSERT(ApplicationModel_CheckArgs(21, 1));
+  TEST_ASSERT(ApplicationModel_CheckArgs(-9, 1));
+  TEST_ASSERT(ApplicationModel_CheckArgs(-9, -7777));
+}
+
+void test_ApplicationModel_CheckArgs_DividendIsZero()
+{
+  TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgs(-9, 0));
+}
