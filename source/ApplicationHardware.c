@@ -1,13 +1,13 @@
 #include <gtk/gtk.h>
 #include "ApplicationHardware.h"
 
-static void(*whenButtonClicked)(void) = 0;
-static void buttonClicked(GtkWidget *widget, gpointer data)
+static void(*whenCalculateClicked)(void) = 0;
+static void calculateClicked(GtkWidget *widget, gpointer data)
 {
-  whenButtonClicked();
+  whenCalculateClicked();
 }
-void ApplicationHardware_WhenButtonClicked(void(*callback)(void)) {
-  whenButtonClicked = callback;
+void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
+  whenCalculateClicked = callback;
 }
 
 static void destroy(GtkWidget *widget, gpointer data)
@@ -16,21 +16,21 @@ static void destroy(GtkWidget *widget, gpointer data)
 }
 
 void ApplicationHardware_Build() {
-  GtkWidget *button = gtk_button_new_with_label("Hello World");
-  g_signal_connect(button, "clicked", G_CALLBACK(buttonClicked), NULL);
+  GtkWidget *calculateButton = gtk_button_new_with_label("Calculate");
+  g_signal_connect(calculateButton, "clicked", G_CALLBACK(calculateClicked), NULL);
 
   GtkWidget *box = gtk_vbox_new(TRUE, 0);
-  gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(box), calculateButton, FALSE, FALSE, 0);
 
   GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(window), "Hello World with MCH");
+  gtk_window_set_title(GTK_WINDOW(window), "MCH Calculator");
   gtk_window_set_default_size(GTK_WINDOW(window), 300, 80);
   gtk_container_set_border_width(GTK_CONTAINER(window), 10);
   g_signal_connect(window, "destroy", G_CALLBACK (destroy), NULL);
 
   gtk_container_add(GTK_CONTAINER(window), box);
 
-  gtk_widget_show(button);
+  gtk_widget_show(calculateButton);
   gtk_widget_show(box);
   gtk_widget_show(window);
 }
