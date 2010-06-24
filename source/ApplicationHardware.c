@@ -16,6 +16,7 @@ static void destroy(GtkWidget *widget, gpointer data)
 }
 
 void ApplicationHardware_Build() {
+
   GtkWidget *calculateButton = gtk_button_new_with_label("Calculate");
   g_signal_connect(calculateButton, "clicked", G_CALLBACK(calculateClicked), NULL);
 
@@ -26,7 +27,8 @@ void ApplicationHardware_Build() {
   gtk_window_set_title(GTK_WINDOW(window), "MCH Calculator");
   gtk_window_set_default_size(GTK_WINDOW(window), 300, 80);
   gtk_container_set_border_width(GTK_CONTAINER(window), 10);
-  g_signal_connect(window, "destroy", G_CALLBACK (destroy), NULL);
+  g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+  g_signal_connect_swapped(window, "delete-event", G_CALLBACK(gtk_widget_destroy), window);
 
   gtk_container_add(GTK_CONTAINER(window), box);
 
