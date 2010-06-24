@@ -23,10 +23,10 @@ void test_ApplicationConductor_InitializesTheApplicationAndStartsTheGui(void)
 }
 
 void test_ApplicationConductor_CalculatesTheQuotientWhenClicked() {
-  ApplicationHardware_GetDivisor_ExpectAndReturn(21);
-  ApplicationHardware_GetDividend_ExpectAndReturn(7);
-  ApplicationModel_CheckArgs_ExpectAndReturn(21, 7, TRUE);
-  ApplicationModel_Divide_ExpectAndReturn(21, 7, 3);
+  ApplicationHardware_GetDivisor_ExpectAndReturn("21");
+  ApplicationHardware_GetDividend_ExpectAndReturn("7");
+  ApplicationModel_CheckArgs_ExpectAndReturn("21", "7", TRUE);
+  ApplicationModel_Divide_ExpectAndReturn("21", "7", 3);
   ApplicationHardware_HideError_Expect();
   ApplicationHardware_SetQuotient_Expect(3);
 
@@ -34,10 +34,18 @@ void test_ApplicationConductor_CalculatesTheQuotientWhenClicked() {
 }
 
 void test_ApplicationConductor_ShowsErrorWhenBadArgs() {
-  ApplicationHardware_GetDivisor_ExpectAndReturn(21);
-  ApplicationHardware_GetDividend_ExpectAndReturn(0);
-  ApplicationModel_CheckArgs_ExpectAndReturn(21, 0, FALSE);
+  ApplicationHardware_GetDivisor_ExpectAndReturn("21");
+  ApplicationHardware_GetDividend_ExpectAndReturn("0");
+  ApplicationModel_CheckArgs_ExpectAndReturn("21", "0", FALSE);
   ApplicationHardware_ShowError_Expect();
 
   ApplicationConductor_CalculateClickedCallback();
+}
+
+void test_ApplicationConductor_AllowsNumbersToBeEntered() {
+  TEST_IGNORE();
+}
+
+void test_ApplicationConductor_DoesNotAllowNonNumbersToBeEntered() {
+  TEST_IGNORE();
 }

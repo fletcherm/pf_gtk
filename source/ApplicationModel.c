@@ -1,20 +1,21 @@
+#include <stdlib.h>
 #include "types.h"
 #include "ApplicationModel.h"
 
-static void(*applicationStartsCallback)(void) = 0;
+static void(*applicationStartsEvent)(void) = 0;
 void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
-  applicationStartsCallback = callback;
+  applicationStartsEvent = callback;
 }
 
 int ApplicationModel_Run() {
   Conductors_RegisterForEvents();
-  applicationStartsCallback();
+  applicationStartsEvent();
 }
 
-int ApplicationModel_Divide(int dividend, int divisor) {
-  return dividend / divisor;
+int ApplicationModel_Divide(char* dividend, char* divisor) {
+  return atoi(dividend) / atoi(divisor);
 }
 
-int ApplicationModel_CheckArgs(int divisor, int dividend) {
-  return (dividend == 0) ? FALSE : TRUE;
+int ApplicationModel_CheckArgs(char* divisor, char* dividend) {
+  return (atoi(dividend) == 0) ? FALSE : TRUE;
 }

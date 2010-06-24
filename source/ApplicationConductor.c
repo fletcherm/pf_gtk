@@ -13,8 +13,8 @@ void ApplicationConductor_ApplicationStartCallback() {
 }
 
 void ApplicationConductor_CalculateClickedCallback() {
-  int divisor = ApplicationHardware_GetDivisor();
-  int dividend = ApplicationHardware_GetDividend();
+  char* divisor = ApplicationHardware_GetDivisor();
+  char* dividend = ApplicationHardware_GetDividend();
   if (ApplicationModel_CheckArgs(divisor, dividend) == FALSE) {
     ApplicationHardware_ShowError();
     return;
