@@ -12,10 +12,10 @@ int ApplicationModel_Run() {
   applicationStartsEvent();
 }
 
-int ApplicationModel_Divide(char* dividend, char* divisor) {
+int ApplicationModel_Divide(const char* dividend, const char* divisor) {
   return atoi(dividend) / atoi(divisor);
 }
 
-int ApplicationModel_CheckArgs(char* divisor, char* dividend) {
+int ApplicationModel_CheckArgs(const char* divisor, const char* dividend) {
   return (atoi(dividend) == 0) ? FALSE : TRUE;
 }

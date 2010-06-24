@@ -1,5 +1,6 @@
 #include "types.h"
 #include "ApplicationConductor.h"
+#include "ApplicationHardware.h"
 #include "ApplicationModel.h"
 
 void ApplicationConductor_RegisterEvents() {
@@ -13,8 +14,8 @@ void ApplicationConductor_ApplicationStartCallback() {
 }
 
 void ApplicationConductor_CalculateClickedCallback() {
-  char* divisor = ApplicationHardware_GetDivisor();
-  char* dividend = ApplicationHardware_GetDividend();
+  const char* divisor = ApplicationHardware_GetDivisor();
+  const char* dividend = ApplicationHardware_GetDividend();
   if (ApplicationModel_CheckArgs(divisor, dividend) == FALSE) {
     ApplicationHardware_ShowError();
     return;
