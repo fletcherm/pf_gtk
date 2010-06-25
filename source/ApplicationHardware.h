@@ -11,5 +11,6 @@ const char* ApplicationHardware_GetDividend();
 void ApplicationHardware_SetQuotient(int);
 void ApplicationHardware_HideError();
 void ApplicationHardware_ShowError();
+void ApplicationHardware_UndoLatestTextEntry();
 
 #endif

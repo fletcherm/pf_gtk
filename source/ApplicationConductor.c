@@ -6,6 +6,7 @@
 void ApplicationConductor_RegisterEvents() {
   ApplicationModel_WhenApplicationStarts(&ApplicationConductor_ApplicationStartCallback);
   ApplicationHardware_WhenCalculateClicked(&ApplicationConductor_CalculateClickedCallback);
+  ApplicationHardware_WhenTextChanged(&ApplicationConductor_TextChangedCallback);
 }
 
 void ApplicationConductor_ApplicationStartCallback() {
@@ -23,4 +24,11 @@ void ApplicationConductor_CalculateClickedCallback() {
   int result = ApplicationModel_Divide(divisor,dividend);
   ApplicationHardware_HideError();
   ApplicationHardware_SetQuotient(result);
+}
+
+void ApplicationConductor_TextChangedCallback() {
+  const char* divisor = ApplicationHardware_GetDivisor();
+  const char* dividend = ApplicationHardware_GetDividend();
+  if (ApplicationModel_CheckArgsFormat(divisor, dividend) == FALSE)
+    ApplicationHardware_UndoLatestTextEntry();
 }

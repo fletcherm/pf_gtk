@@ -2,6 +2,7 @@
 #include "unity.h"
 #include "ApplicationModel.h"
 #include "mock_Conductors.h"
+#include "mock_NumberValidator.h"
 
 bool application_starts_called;
 
@@ -49,4 +50,24 @@ void test_ApplicationModel_CheckArgs_ArgsAreOK()
 void test_ApplicationModel_CheckArgs_DividendIsZero()
 {
   TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgs("-9", "0"));
+}
+
+void test_ApplicationModel_CheckArgsFormat_IsOkWhenBothArgsAreNumbers() {
+  NumberValidator_IsNumber_ExpectAndReturn("321", TRUE);
+  NumberValidator_IsNumber_ExpectAndReturn("-13", TRUE);
+
+  TEST_ASSERT(ApplicationModel_CheckArgsFormat("321", "-13"));
+}
+
+void test_ApplicationModel_CheckArgsFormat_IsNotOkWhenDivisorIsNotANumber() {
+  NumberValidator_IsNumber_ExpectAndReturn("a-321", FALSE);
+
+  TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgsFormat("a-321", "-13"));
+}
+
+void test_ApplicationModel_CheckArgsFormat_IsNotOkWhenDividendIsNotANumber() {
+  NumberValidator_IsNumber_ExpectAndReturn("321", TRUE);
+  NumberValidator_IsNumber_ExpectAndReturn("b-13", FALSE);
+
+  TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgsFormat("321", "b-13"));
 }

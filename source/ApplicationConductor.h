@@ -4,5 +4,6 @@
 void ApplicationConductor_RegisterEvents();
 void ApplicationConductor_ApplicationStartCallback();
 void ApplicationConductor_CalculateClickedCallback();
+void ApplicationConductor_TextChangedCallback();
 
 #endif // _ApplicationConductor_H

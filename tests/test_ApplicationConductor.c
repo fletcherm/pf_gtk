@@ -10,6 +10,7 @@ void tearDown(void) {}
 void test_ApplicationConductor_RegistersForEvents(void) {
   ApplicationModel_WhenApplicationStarts_Expect(&ApplicationConductor_ApplicationStartCallback);
   ApplicationHardware_WhenCalculateClicked_Expect(&ApplicationConductor_CalculateClickedCallback);
+  ApplicationHardware_WhenTextChanged_Expect(&ApplicationConductor_TextChangedCallback);
 
   ApplicationConductor_RegisterEvents();
 }
@@ -43,9 +44,18 @@ void test_ApplicationConductor_ShowsErrorWhenBadArgs() {
 }
 
 void test_ApplicationConductor_AllowsNumbersToBeEntered() {
-  TEST_IGNORE();
+  ApplicationHardware_GetDivisor_ExpectAndReturn("21");
+  ApplicationHardware_GetDividend_ExpectAndReturn("0");
+  ApplicationModel_CheckArgsFormat_ExpectAndReturn("21", "0", TRUE);
+
+  ApplicationConductor_TextChangedCallback();
 }
 
 void test_ApplicationConductor_DoesNotAllowNonNumbersToBeEntered() {
-  TEST_IGNORE();
+  ApplicationHardware_GetDivisor_ExpectAndReturn("21");
+  ApplicationHardware_GetDividend_ExpectAndReturn("0");
+  ApplicationModel_CheckArgsFormat_ExpectAndReturn("21", "0", FALSE);
+  ApplicationHardware_UndoLatestTextEntry_Expect();
+
+  ApplicationConductor_TextChangedCallback();
 }

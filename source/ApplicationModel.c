@@ -19,3 +19,7 @@ int ApplicationModel_Divide(const char* dividend, const char* divisor) {
 int ApplicationModel_CheckArgs(const char* divisor, const char* dividend) {
   return (atoi(dividend) == 0) ? FALSE : TRUE;
 }
+
+int ApplicationModel_CheckArgsFormat(const char* divisor, const char* dividend) {
+  return NumberValidator_IsNumber(divisor) && NumberValidator_IsNumber(dividend);
+}
