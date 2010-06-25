@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "types.h"
 #include "ApplicationModel.h"
 

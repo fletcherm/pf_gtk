@@ -15,7 +15,7 @@ void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
 static void(*whenTextChanged)(void) = 0;
 static void textChanged(GtkWidget *widget, gpointer data)
 {
-//  whenTextChanged();
+  whenTextChanged();
 }
 void ApplicationHardware_WhenTextChanged(void(*callback)(void)) {
   whenTextChanged = callback;
@@ -99,6 +99,10 @@ void ApplicationHardware_Build() {
   gtk_container_add(GTK_CONTAINER(window), bigBox);
 }
 
+void ApplicationHardware_Start() {
+  gtk_main();
+}
+
 const char* ApplicationHardware_GetDivisor() {
   return gtk_entry_get_text(GTK_ENTRY(divisor));
 }
@@ -121,6 +125,7 @@ void ApplicationHardware_ShowError() {
   gtk_widget_show(errorLabel);
 }
 
-void ApplicationHardware_Start() {
-  gtk_main();
+void ApplicationHardware_UndoLatestTextEntry() {
+  g_signal_stop_emission_by_name(divisor, "insert-text");
+  g_signal_stop_emission_by_name(dividend, "insert-text");
 }
