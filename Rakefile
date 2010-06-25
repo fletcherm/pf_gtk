@@ -11,13 +11,17 @@ desc "build it"
 task :build => "build:release"
 
 namespace :proto do
-  def gtk_cflags
+  def gtk_flags
     `pkg-config --cflags --libs gtk+-2.0`.strip
+  end
+
+  def pcre_flags
+    `pkg-config --cflags --libs libpcre`.strip
   end
 
   desc "run proto"
   task :run do
-    sh "gcc #{gtk_cflags} proto/hello.c -o proto/hello"
+    sh "gcc #{gtk_flags} #{pcre_flags} proto/hello.c -o proto/hello"
     sh "proto/hello"
   end
 
