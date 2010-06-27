@@ -52,22 +52,14 @@ void test_ApplicationModel_CheckArgs_DividendIsZero()
   TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgs("-9", "0"));
 }
 
-void test_ApplicationModel_CheckArgsFormat_IsOkWhenBothArgsAreNumbers() {
+void test_ApplicationModel_CheckArgFormat_IsOkWhenArgIsANumber() {
   NumberValidator_IsNumber_ExpectAndReturn("321", TRUE);
-  NumberValidator_IsNumber_ExpectAndReturn("-13", TRUE);
 
-  TEST_ASSERT(ApplicationModel_CheckArgsFormat("321", "-13"));
+  TEST_ASSERT(ApplicationModel_CheckArgFormat("321"));
 }
 
-void test_ApplicationModel_CheckArgsFormat_IsNotOkWhenDivisorIsNotANumber() {
-  NumberValidator_IsNumber_ExpectAndReturn("a-321", FALSE);
+void test_ApplicationModel_CheckArgFormat_IsNotOkWhenArgIsNotANumber() {
+  NumberValidator_IsNumber_ExpectAndReturn("through the never", FALSE);
 
-  TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgsFormat("a-321", "-13"));
-}
-
-void test_ApplicationModel_CheckArgsFormat_IsNotOkWhenDividendIsNotANumber() {
-  NumberValidator_IsNumber_ExpectAndReturn("321", TRUE);
-  NumberValidator_IsNumber_ExpectAndReturn("b-13", FALSE);
-
-  TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgsFormat("321", "b-13"));
+  TEST_ASSERT_FALSE(ApplicationModel_CheckArgFormat("through the never"));
 }

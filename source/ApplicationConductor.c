@@ -6,7 +6,8 @@
 void ApplicationConductor_RegisterEvents() {
   ApplicationModel_WhenApplicationStarts(&ApplicationConductor_ApplicationStartCallback);
   ApplicationHardware_WhenCalculateClicked(&ApplicationConductor_CalculateClickedCallback);
-  ApplicationHardware_WhenTextChanged(&ApplicationConductor_TextChangedCallback);
+  ApplicationHardware_WhenDivisorChanged(&ApplicationConductor_DivisorChangedCallback);
+  ApplicationHardware_WhenDividendChanged(&ApplicationConductor_DividendChangedCallback);
 }
 
 void ApplicationConductor_ApplicationStartCallback() {
@@ -26,9 +27,12 @@ void ApplicationConductor_CalculateClickedCallback() {
   ApplicationHardware_SetQuotient(result);
 }
 
-void ApplicationConductor_TextChangedCallback() {
-  const char* divisor = ApplicationHardware_GetDivisor();
-  const char* dividend = ApplicationHardware_GetDividend();
-  if (ApplicationModel_CheckArgsFormat(divisor, dividend) == FALSE)
-    ApplicationHardware_UndoLatestTextEntry();
+void ApplicationConductor_DivisorChangedCallback() {
+  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDivisor()) == FALSE)
+    ApplicationHardware_UndoDivisorTextChange();
+}
+
+void ApplicationConductor_DividendChangedCallback() {
+  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDividend()) == FALSE)
+    ApplicationHardware_UndoDividendTextChange();
 }

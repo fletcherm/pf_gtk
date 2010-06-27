@@ -10,7 +10,8 @@ void tearDown(void) {}
 void test_ApplicationConductor_RegistersForEvents(void) {
   ApplicationModel_WhenApplicationStarts_Expect(&ApplicationConductor_ApplicationStartCallback);
   ApplicationHardware_WhenCalculateClicked_Expect(&ApplicationConductor_CalculateClickedCallback);
-  ApplicationHardware_WhenTextChanged_Expect(&ApplicationConductor_TextChangedCallback);
+  ApplicationHardware_WhenDivisorChanged_Expect(&ApplicationConductor_DivisorChangedCallback);
+  ApplicationHardware_WhenDividendChanged_Expect(&ApplicationConductor_DividendChangedCallback);
 
   ApplicationConductor_RegisterEvents();
 }
@@ -43,19 +44,32 @@ void test_ApplicationConductor_ShowsErrorWhenBadArgs() {
   ApplicationConductor_CalculateClickedCallback();
 }
 
-void test_ApplicationConductor_AllowsNumbersToBeEntered() {
+void test_ApplicationConductor_AllowsNumbersToBeEnteredForTheDivisor() {
   ApplicationHardware_GetDivisor_ExpectAndReturn("21");
-  ApplicationHardware_GetDividend_ExpectAndReturn("0");
-  ApplicationModel_CheckArgsFormat_ExpectAndReturn("21", "0", TRUE);
+  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", TRUE);
 
-  ApplicationConductor_TextChangedCallback();
+  ApplicationConductor_DivisorChangedCallback();
 }
 
-void test_ApplicationConductor_DoesNotAllowNonNumbersToBeEntered() {
+void test_ApplicationConductor_DoesNotAllowNonNumbersToBeEnteredForTheDivisor() {
   ApplicationHardware_GetDivisor_ExpectAndReturn("21");
-  ApplicationHardware_GetDividend_ExpectAndReturn("0");
-  ApplicationModel_CheckArgsFormat_ExpectAndReturn("21", "0", FALSE);
-  ApplicationHardware_UndoLatestTextEntry_Expect();
+  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", FALSE);
+  ApplicationHardware_UndoDivisorTextChange_Expect();
 
-  ApplicationConductor_TextChangedCallback();
+  ApplicationConductor_DivisorChangedCallback();
+}
+
+void test_ApplicationConductor_AllowsNumbersToBeEnteredForTheDividend() {
+  ApplicationHardware_GetDividend_ExpectAndReturn("21");
+  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", TRUE);
+
+  ApplicationConductor_DividendChangedCallback();
+}
+
+void test_ApplicationConductor_DoesNotAllowNonNumbersToBeEnteredForTheDividend() {
+  ApplicationHardware_GetDividend_ExpectAndReturn("21");
+  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", FALSE);
+  ApplicationHardware_UndoDividendTextChange_Expect();
+
+  ApplicationConductor_DividendChangedCallback();
 }

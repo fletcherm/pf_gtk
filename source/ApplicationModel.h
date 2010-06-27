@@ -6,6 +6,6 @@ void ApplicationModel_WhenApplicationStarts(void(*callback)(void));
 int ApplicationModel_Run();
 int ApplicationModel_Divide(const char* divisor, const char* dividend);
 int ApplicationModel_CheckArgs(const char* divisor, const char* dividend);
-int ApplicationModel_CheckArgsFormat(const char* divisor, const char* dividend);
+int ApplicationModel_CheckArgFormat(const char* possibleNumber);
 
 #endif // _ApplicationModel_H

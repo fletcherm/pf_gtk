@@ -12,13 +12,22 @@ void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
   whenCalculateClicked = callback;
 }
 
-static void(*whenTextChanged)(void) = 0;
-static void textChanged(GtkWidget *widget, gpointer data)
+static void(*whenDivisorChanged)(void) = 0;
+static void divisorChanged(GtkWidget *widget, gpointer data)
 {
-  whenTextChanged();
+  whenDivisorChanged();
 }
-void ApplicationHardware_WhenTextChanged(void(*callback)(void)) {
-  whenTextChanged = callback;
+void ApplicationHardware_WhenDivisorChanged(void(*callback)(void)) {
+  whenDivisorChanged = callback;
+}
+
+static void(*whenDividendChanged)(void) = 0;
+static void dividendChanged(GtkWidget *widget, gpointer data)
+{
+  whenDividendChanged();
+}
+void ApplicationHardware_WhenDividendChanged(void(*callback)(void)) {
+  whenDividendChanged = callback;
 }
 
 GtkWidget *dividend;
@@ -31,7 +40,7 @@ void ApplicationHardware_Build() {
   GtkWidget *divisorLabel = gtk_label_new("Divisor");
   divisor = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(divisor), TEXT_FIELD_SIZE);
-  g_signal_connect(divisor, "insert-text", G_CALLBACK(textChanged), NULL);
+  g_signal_connect(divisor, "insert-text", G_CALLBACK(divisorChanged), NULL);
 
   GtkWidget *divisorBox = gtk_hbox_new(TRUE, 0);
   gtk_box_pack_start(GTK_BOX(divisorBox), divisorLabel, FALSE, FALSE, 0);
@@ -45,7 +54,7 @@ void ApplicationHardware_Build() {
   GtkWidget *dividendLabel = gtk_label_new("Dividend");
   dividend = gtk_entry_new();
   gtk_entry_set_max_length(GTK_ENTRY(dividend), TEXT_FIELD_SIZE);
-  g_signal_connect(dividend, "insert-text", G_CALLBACK(textChanged), NULL);
+  g_signal_connect(dividend, "insert-text", G_CALLBACK(dividendChanged), NULL);
 
   GtkWidget *dividendBox = gtk_hbox_new(TRUE, 0);
   gtk_box_pack_start(GTK_BOX(dividendBox), dividendLabel, FALSE, FALSE, 0);
@@ -125,7 +134,10 @@ void ApplicationHardware_ShowError() {
   gtk_widget_show(errorLabel);
 }
 
-void ApplicationHardware_UndoLatestTextEntry() {
+void ApplicationHardware_UndoDivisorTextChange() {
   g_signal_stop_emission_by_name(divisor, "insert-text");
+}
+
+void ApplicationHardware_UndoDividendTextChange() {
   g_signal_stop_emission_by_name(dividend, "insert-text");
 }
