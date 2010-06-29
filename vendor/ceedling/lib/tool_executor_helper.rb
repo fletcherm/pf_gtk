@@ -25,7 +25,8 @@ class ToolExecutorHelper
       output += "#{command_str}\n"
       output += "> Produced response:\n"           if (not shell_result[:output].empty?)
       output += "#{shell_result[:output].strip}\n" if (not shell_result[:output].empty?)
-      output += "> And exited with status: [#{shell_result[:exit_code]}].\n"
+      output += "> And exited with status: [#{shell_result[:exit_code]}].\n" if (shell_result[:exit_code] != nil)
+      output += "> And then likely crashed.\n"                               if (shell_result[:exit_code] == nil)
       output += "\n"
 
       @streaminator.stderr_puts(output, Verbosity::ERRORS)

@@ -26,6 +26,7 @@ DEFAULT_TEST_LINKER_TOOL = {
 DEFAULT_TEST_FIXTURE_TOOL = {
   :executable => '${1}',
   :name => 'default_test_fixture',
+  :arguments => []
   }
 
 
@@ -35,8 +36,13 @@ DEFAULT_TEST_INCLUDES_PREPROCESSOR_TOOL = {
   :name => 'default_test_includes_preprocessor',
   :arguments => [
     '-MM', '-MG',
+    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE'},
+    {"-I\"$\"" => 'COLLECTION_PATHS_INCLUDE'},
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST'},
     {"-D$" => 'COLLECTION_DEFINES_TEST'},
     {"-D$" => 'DEFINES_TEST_PREPROCESS'},
+    '-w',
+    '-nostdinc',
     "\"${1}\""
     ]
   }
@@ -47,7 +53,6 @@ DEFAULT_TEST_FILE_PREPROCESSOR_TOOL = {
   :arguments => [
     '-E',
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST_AND_SOURCE_AND_INCLUDE'},
-    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'},
     {"-D$" => 'COLLECTION_DEFINES_TEST'},
     {"-D$" => 'DEFINES_TEST_PREPROCESS'},
     "\"${1}\"",
@@ -124,16 +129,16 @@ DEFAULT_CEEDLING_CONFIG = {
       :logging => false,
       :use_exceptions => true,
       :use_mocks => true,
-      :use_preprocessor => false,
+      :use_test_preprocessor => false,
       :use_auxiliary_dependencies => false,
       :test_file_prefix => 'test_',
       :verbosity => Verbosity::NORMAL,
       :options_path => NULL_FILE_PATH,
+      :release_build => false,
     },
 
     :release_build => {
       :output => 'project.out',
-      :enabled => false,
       :use_assembly => false,      
     },
 
@@ -178,7 +183,8 @@ DEFAULT_CEEDLING_CONFIG = {
       :file_suffix => '_runner',
     },
 
-	:tools => {},
+    # all tools populated while building up config structure
+    :tools => {},
 
     :plugins => {
       :base_path => NULL_FILE_PATH,

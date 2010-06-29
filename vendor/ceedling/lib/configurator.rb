@@ -47,11 +47,11 @@ class Configurator
   def populate_defaults(config)
     new_config = DEFAULT_CEEDLING_CONFIG.clone
 
+    @configurator_builder.populate_default_test_tools(config, new_config)
+    @configurator_builder.populate_default_test_helper_tools(config, new_config)
+    @configurator_builder.populate_default_release_tools(config, new_config)
+ 
     new_config.deep_merge!(config)
-
-    @configurator_builder.populate_default_test_tools(new_config)
-    @configurator_builder.populate_default_test_helper_tools(new_config)
-    @configurator_builder.populate_default_release_tools(new_config)
 
     config.replace(new_config)
   end
@@ -63,14 +63,18 @@ class Configurator
     # note: these need to end up in the hash given to initialize cmock for this to be successful
     cmock = {}    
     cmock = config[:cmock] if not config[:cmock].nil?
-    
+
     cmock[:mock_prefix] = 'Mock'                                                 if (cmock[:mock_prefix].nil?)
     cmock[:enforce_strict_ordering] = true                                       if (cmock[:enforce_strict_ordering].nil?)
     cmock[:mock_path] = File.join(config[:project][:build_root], 'tests/mocks')  if (cmock[:mock_path].nil?)
     cmock[:verbosity] = config[:project][:verbosity]                             if (cmock[:verbosity].nil?)
-    
+
+    cmock[:plugins] = []               if (cmock[:plugins].nil?)
+    cmock[:plugins].map! { |plugin| plugin.to_sym }
+    cmock[:plugins] << (:cexception)   if (!cmock[:plugins].include?(:cexception) and (config[:project][:use_exceptions]))
+
     config[:cmock] = cmock if config[:cmock].nil?
-    
+
     @cmock_config_hash = config[:cmock].clone
   end
 
@@ -183,7 +187,6 @@ class Configurator
     
   
   def insert_rake_plugins(plugins)
-  
     plugins.each do |plugin|
       @project_config_hash[:project_rakefile_component_files] << plugin
     end

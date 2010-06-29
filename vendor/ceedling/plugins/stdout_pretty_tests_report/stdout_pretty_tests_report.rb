@@ -7,15 +7,20 @@ class StdoutPrettyTestsReport < Plugin
     @test_list = []
     
     @template = %q{
-      % ignored = results[:counts][:ignored]
-      % failed  = results[:counts][:failed]
+      % ignored      = results[:counts][:ignored]
+      % failed       = results[:counts][:failed]
+      % stdout_count = results[:counts][:stdout]
       % if (ignored > 0)
       <%=@ceedling[:plugin_reportinator].generate_banner('IGNORED UNIT TEST SUMMARY')%>
       %   results[:ignores].each do |ignore|
       [<%=ignore[:source][:file]%>]
       %     ignore[:collection].each do |item|
         Test: <%=item[:test]%>
+      % if (not item[:message].empty?)
         At line (<%=item[:line]%>): "<%=item[:message]%>"
+      % else
+        At line (<%=item[:line]%>)
+      % end
 
       %     end
       %   end
@@ -26,9 +31,23 @@ class StdoutPrettyTestsReport < Plugin
       [<%=failure[:source][:file]%>]
       %     failure[:collection].each do |item|
         Test: <%=item[:test]%>
+      % if (not item[:message].empty?)
         At line (<%=item[:line]%>): "<%=item[:message]%>"
+      % else
+        At line (<%=item[:line]%>)
+      % end
 
       %     end
+      %   end
+      % end
+      % if (stdout_count > 0)
+      <%=@ceedling[:plugin_reportinator].generate_banner('UNIT TEST OTHER OUTPUT')%>
+      %   results[:stdout].each do |string|
+      [<%=string[:source][:file]%>]
+      %     string[:collection].each do |item|
+        - "<%=item%>"
+      %     end
+
       %   end
       % end
       % total_string = results[:counts][:total].to_s

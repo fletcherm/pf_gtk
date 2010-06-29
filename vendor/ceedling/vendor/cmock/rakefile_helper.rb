@@ -45,7 +45,7 @@ module RakefileHelpers
     includes = []
     lines = File.readlines(filename)
     lines.each do |line|
-      m = line.match /#include \"(.*)\"/
+      m = line.match(/^\s*#include\s+\"\s*(.+\.[hH])\s*\"/)
       if not m.nil?
         includes << m[1]
       end
@@ -172,10 +172,11 @@ module RakefileHelpers
     results = Dir[results_glob]
     summary.set_targets(results)
     summary.run
+    raise "There were failures" if (summary.failures > 0)
   end
   
   def run_system_test_interactions(test_case_files)
-    require 'cmock'
+    load 'cmock.rb'
     
     SystemTestGenerator.new.generate_files(test_case_files)
     test_files = FileList.new(SYSTEST_GENERATED_FILES_PATH + 'test*.c')
@@ -193,7 +194,7 @@ module RakefileHelpers
       test_base    = File.basename(test, C_EXTENSION)
       cmock_config = test_base.gsub(/test_/, '') + '_cmock.yml'
       
-      report "Executing system test cases contained in #{File.basename(test)}..."
+      report "Executing system tests in #{File.basename(test)}..."
       
       # Detect dependencies and build required required modules
       extract_headers(test).each do |header|
@@ -250,16 +251,26 @@ module RakefileHelpers
 
       test_file    = 'test_' + File.basename(test_case).ext(C_EXTENSION)
       result_file  = test_file.ext(RESULT_EXTENSION)
-      test_results = File.read(SYSTEST_BUILD_FILES_PATH + result_file)
+      test_results = File.readlines(SYSTEST_BUILD_FILES_PATH + result_file)
 
       tests.each_with_index do |test, index|
         # compare test's intended pass/fail state with pass/fail state in actual results;
         # if they don't match, the system test has failed
-        if ((test[:pass] and (test_results =~ /:PASS/).nil?) or (!test[:pass] and (test_results =~ /:FAIL/).nil?))
+        this_failed = case(test[:pass])
+          when :ignore
+            (test_results[index] =~ /:IGNORE/).nil?
+          when true
+            (test_results[index] =~ /:PASS/).nil?
+          when false
+            (test_results[index] =~ /:FAIL/).nil?
+        end
+        if (this_failed)
           total_failures += 1
-          test_results =~ /test#{index+1}:(.+)/
+          test_results[index] =~ /test#{index+1}:(.+)/
           failure_messages << "#{test_file}:test#{index+1}:should #{test[:should]}:#{$1}"
-        elsif (test[:verify_error]) and not (test_results =~ /test#{index+1}:.*#{test[:verify_error]}/)
+        end
+        # some tests have additional requirements to check for (checking the actual output message)
+        if (test[:verify_error]) and not (test_results[index] =~ /test#{index+1}:.*#{test[:verify_error]}/)
           total_failures += 1
           failure_messages << "#{test_file}:test#{index+1}:should #{test[:should]}:should have output matching '#{test[:verify_error]}'"
         end
@@ -305,7 +316,7 @@ module RakefileHelpers
   end
   
   def run_system_test_compilations(mockables)
-    require 'cmock'
+    load 'cmock.rb'
     
     load_configuration($cfg_file)
     $cfg['compiler']['defines']['items'] = [] if $cfg['compiler']['defines']['items'].nil?
@@ -323,7 +334,7 @@ module RakefileHelpers
   end
   
   def run_system_test_profiles(mockables)
-    require 'cmock'
+    load 'cmock.rb'
     
     load_configuration($cfg_file)
     $cfg['compiler']['defines']['items'] = [] if $cfg['compiler']['defines']['items'].nil?

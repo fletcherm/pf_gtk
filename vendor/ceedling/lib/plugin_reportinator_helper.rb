@@ -43,10 +43,12 @@ class PluginReportinatorHelper
     aggregate_results[:successes]        << { :source => results[:source].clone, :collection => results[:successes].clone } if (results[:successes].size > 0)
     aggregate_results[:failures]         << { :source => results[:source].clone, :collection => results[:failures].clone  } if (results[:failures].size > 0)
     aggregate_results[:ignores]          << { :source => results[:source].clone, :collection => results[:ignores].clone   } if (results[:ignores].size > 0)
+    aggregate_results[:stdout]           << { :source => results[:source].clone, :collection => results[:stdout].clone    } if (results[:stdout].size > 0)
     aggregate_results[:counts][:total]   += results[:counts][:total]
     aggregate_results[:counts][:passed]  += results[:counts][:passed]
     aggregate_results[:counts][:failed]  += results[:counts][:failed]
     aggregate_results[:counts][:ignored] += results[:counts][:ignored]
+    aggregate_results[:counts][:stdout]  += results[:stdout].size
   end
 
 
