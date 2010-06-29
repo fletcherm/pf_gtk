@@ -4,15 +4,15 @@
   :use_preprocessor: TRUE
   :use_auxiliary_dependencies: TRUE
   :build_root: build
+  :release_build: yes
 
 :release_build:
   :output: mch_gui
-  :enabled: yes
 
-:module_generator:
-  :project_root: '.'
-  :source_root: source
-  :test_root: tests
+# :module_generator:
+#   :project_root: '.'
+#   :source_root: source
+#   :test_root: tests
 
 :paths:
   :test:
@@ -48,7 +48,7 @@
   :base_path: vendor/ceedling/plugins
   :enabled:
     - stdout_pretty_tests_report
-    - module_generator
+    # - module_generator
 
 :tools:
   :test_compiler: &compiler_argz

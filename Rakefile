@@ -3,7 +3,7 @@ load "vendor/ceedling/lib/rakefile.rb"
 task :default => :run
 
 desc "run hello"
-task :run => "build:release" do
+task :run => "release" do
   sh "build/artifacts/release/mch_gui"
 end
 
