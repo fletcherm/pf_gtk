@@ -27,12 +27,12 @@ void ApplicationConductor_CalculateClickedCallback() {
   ApplicationHardware_SetQuotient(result);
 }
 
-void ApplicationConductor_DivisorChangedCallback() {
+void ApplicationConductor_DivisorChangedCallback(char* new_text) {
   if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDivisor()) == FALSE)
     ApplicationHardware_UndoDivisorTextChange();
 }
 
-void ApplicationConductor_DividendChangedCallback() {
+void ApplicationConductor_DividendChangedCallback(char* new_text) {
   if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDividend()) == FALSE)
     ApplicationHardware_UndoDividendTextChange();
 }

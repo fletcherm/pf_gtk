@@ -1,32 +1,27 @@
 #include <gtk/gtk.h>
 #include "ApplicationHardware.h"
 
-#define TEXT_FIELD_SIZE 10
-
 static void(*whenCalculateClicked)(void) = 0;
-static void calculateClicked(GtkWidget *widget, gpointer data)
-{
+static void calculateClicked(GtkWidget *widget, gpointer data) {
   whenCalculateClicked();
 }
 void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
   whenCalculateClicked = callback;
 }
 
-static void(*whenDivisorChanged)(void) = 0;
-static void divisorChanged(GtkWidget *widget, gpointer data)
-{
-  whenDivisorChanged();
+static void(*whenDivisorChanged)(gchar*) = 0;
+static void divisorChanged(GtkWidget *widget, gchar *new_text, gint new_text_length, gint *position, gpointer data) {
+  whenDivisorChanged(new_text);
 }
-void ApplicationHardware_WhenDivisorChanged(void(*callback)(void)) {
+void ApplicationHardware_WhenDivisorChanged(void(*callback)(gchar*)) {
   whenDivisorChanged = callback;
 }
 
-static void(*whenDividendChanged)(void) = 0;
-static void dividendChanged(GtkWidget *widget, gpointer data)
-{
-  whenDividendChanged();
+static void(*whenDividendChanged)(gchar*) = 0;
+static void dividendChanged(GtkWidget *widget, gchar *new_text, gint new_text_length, gint *position, gpointer data) {
+  whenDividendChanged(new_text);
 }
-void ApplicationHardware_WhenDividendChanged(void(*callback)(void)) {
+void ApplicationHardware_WhenDividendChanged(void(*callback)(gchar*)) {
   whenDividendChanged = callback;
 }
 
@@ -39,7 +34,7 @@ void ApplicationHardware_Build() {
   // divisor stuff
   GtkWidget *divisorLabel = gtk_label_new("Divisor");
   divisor = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(divisor), TEXT_FIELD_SIZE);
+  gtk_entry_set_max_length(GTK_ENTRY(divisor), DIVISION_FIELD_SIZE);
   g_signal_connect(divisor, "insert-text", G_CALLBACK(divisorChanged), NULL);
 
   GtkWidget *divisorBox = gtk_hbox_new(TRUE, 0);
@@ -53,7 +48,7 @@ void ApplicationHardware_Build() {
   // dividend stuff
   GtkWidget *dividendLabel = gtk_label_new("Dividend");
   dividend = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(dividend), TEXT_FIELD_SIZE);
+  gtk_entry_set_max_length(GTK_ENTRY(dividend), DIVISION_FIELD_SIZE);
   g_signal_connect(dividend, "insert-text", G_CALLBACK(dividendChanged), NULL);
 
   GtkWidget *dividendBox = gtk_hbox_new(TRUE, 0);
@@ -67,7 +62,7 @@ void ApplicationHardware_Build() {
   // result stuff
   GtkWidget *resultLabel = gtk_label_new("Result");
   result = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(result), TEXT_FIELD_SIZE);
+  gtk_entry_set_max_length(GTK_ENTRY(result), DIVISION_FIELD_SIZE);
   gtk_editable_set_editable(GTK_EDITABLE(result), FALSE);
 
   GtkWidget *resultBox = gtk_hbox_new(TRUE, 0);
@@ -121,7 +116,7 @@ const char* ApplicationHardware_GetDividend() {
 }
 
 void ApplicationHardware_SetQuotient(int q) {
-  char quotient[TEXT_FIELD_SIZE];
+  char quotient[DIVISION_FIELD_SIZE];
   sprintf(quotient, "%d", q);
   gtk_entry_set_text(GTK_ENTRY(result), quotient);
 }

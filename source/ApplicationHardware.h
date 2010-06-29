@@ -1,9 +1,11 @@
 #ifndef _APPLICATION_HARDWARE_
 #define _APPLICATION_HARDWARE_
 
-void ApplicationHardware_WhenCalculateClicked(void(*callback)(void));
-void ApplicationHardware_WhenDivisorChanged(void(*callback)(void));
-void ApplicationHardware_WhenDividendChanged(void(*callback)(void));
+#define DIVISION_FIELD_SIZE 10
+
+void ApplicationHardware_WhenCalculateClicked(void(*callback)());
+void ApplicationHardware_WhenDivisorChanged(void(*callback)(char* new_text));
+void ApplicationHardware_WhenDividendChanged(void(*callback)(char* new_text));
 
 void ApplicationHardware_Build();
 void ApplicationHardware_Start();
