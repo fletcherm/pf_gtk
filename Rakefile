@@ -8,7 +8,7 @@ task :run => "release" do
 end
 
 desc "build it"
-task :build => "build:release"
+task :build => "release"
 
 namespace :proto do
   def gtk_flags
