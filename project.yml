@@ -9,10 +9,10 @@
 :release_build:
   :output: mch_gui
 
-# :module_generator:
-#   :project_root: '.'
-#   :source_root: source
-#   :test_root: tests
+:module_generator:
+  :project_root: '.'
+  :source_root: source
+  :test_root: tests
 
 :paths:
   :test:
@@ -48,7 +48,7 @@
   :base_path: vendor/ceedling/plugins
   :enabled:
     - stdout_pretty_tests_report
-    # - module_generator
+    - module_generator
 
 :tools:
   :test_compiler: &compiler_argz
