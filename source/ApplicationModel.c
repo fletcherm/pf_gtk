@@ -1,5 +1,7 @@
 #include "types.h"
 #include "ApplicationModel.h"
+#include "ApplicationHardware.h"
+#include <stdio.h>
 
 static void(*applicationStartsEvent)(void) = 0;
 void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
@@ -19,6 +21,8 @@ int ApplicationModel_CheckArgs(const char* divisor, const char* dividend) {
   return (atoi(dividend) == 0) ? FALSE : TRUE;
 }
 
-int ApplicationModel_CheckArgFormat(const char* possibleNumber) {
-  return NumberValidator_IsNumber(possibleNumber);
+int ApplicationModel_CheckArgFormat(const char* previouslyEnteredText, const char* newText) {
+  char entireText[DIVISION_FIELD_SIZE];
+  sprintf(entireText, "%s%s", previouslyEnteredText, newText);
+  return NumberValidator_IsNumber(entireText);
 }

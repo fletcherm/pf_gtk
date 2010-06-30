@@ -53,13 +53,17 @@ void test_ApplicationModel_CheckArgs_DividendIsZero()
 }
 
 void test_ApplicationModel_CheckArgFormat_IsOkWhenArgIsANumber() {
-  NumberValidator_IsNumber_ExpectAndReturn("321", TRUE);
+  NumberValidator_IsNumber_ExpectAndReturn("32122", TRUE);
 
-  TEST_ASSERT(ApplicationModel_CheckArgFormat("321"));
+  TEST_ASSERT(ApplicationModel_CheckArgFormat("321", "22"));
 }
 
 void test_ApplicationModel_CheckArgFormat_IsNotOkWhenArgIsNotANumber() {
-  NumberValidator_IsNumber_ExpectAndReturn("through the never", FALSE);
+  NumberValidator_IsNumber_ExpectAndReturn("evenflow", FALSE);
 
-  TEST_ASSERT_FALSE(ApplicationModel_CheckArgFormat("through the never"));
+  TEST_ASSERT_FALSE(ApplicationModel_CheckArgFormat("even", "flow"));
+}
+
+void test_ApplicationModel_CheckArgFormat_DoesNotValidateArgThatIsTooLong() {
+  TEST_IGNORE();
 }

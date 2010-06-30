@@ -28,11 +28,11 @@ void ApplicationConductor_CalculateClickedCallback() {
 }
 
 void ApplicationConductor_DivisorChangedCallback(char* new_text) {
-  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDivisor()) == FALSE)
+  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDivisor(), new_text) == FALSE)
     ApplicationHardware_UndoDivisorTextChange();
 }
 
 void ApplicationConductor_DividendChangedCallback(char* new_text) {
-  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDividend()) == FALSE)
+  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDividend(), new_text) == FALSE)
     ApplicationHardware_UndoDividendTextChange();
 }
