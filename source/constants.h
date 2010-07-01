@@ -1,0 +1,1 @@
+#define DIVISION_FIELD_SIZE 10

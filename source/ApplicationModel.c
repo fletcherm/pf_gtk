@@ -1,6 +1,6 @@
 #include "types.h"
 #include "ApplicationModel.h"
-#include "ApplicationHardware.h"
+#include "constants.h"
 #include <stdio.h>
 
 static void(*applicationStartsEvent)(void) = 0;

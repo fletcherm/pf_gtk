@@ -49,7 +49,7 @@ void test_ApplicationModel_CheckArgs_ArgsAreOK()
 
 void test_ApplicationModel_CheckArgs_DividendIsZero()
 {
-  TEST_ASSERT_EQUAL(FALSE, ApplicationModel_CheckArgs("-9", "0"));
+  TEST_ASSERT_FALSE(ApplicationModel_CheckArgs("-9", "0"));
 }
 
 void test_ApplicationModel_CheckArgFormat_IsOkWhenArgIsANumber() {
