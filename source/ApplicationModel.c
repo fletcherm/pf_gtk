@@ -1,7 +1,6 @@
 #include "types.h"
+#include "bstrlib.h"
 #include "ApplicationModel.h"
-#include "constants.h"
-#include <stdio.h>
 
 static void(*applicationStartsEvent)(void) = 0;
 void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
@@ -22,7 +21,11 @@ int ApplicationModel_CheckArgs(const char* divisor, const char* dividend) {
 }
 
 int ApplicationModel_CheckArgFormat(const char* previouslyEnteredText, const char* newText) {
-  char entireText[DIVISION_FIELD_SIZE];
-  sprintf(entireText, "%s%s", previouslyEnteredText, newText);
-  return NumberValidator_IsNumber(entireText);
+  bstring combined, new;
+  bconcat(combined = bfromcstr(previouslyEnteredText), new = bfromcstr(newText));
+  bdestroy(new);
+
+  int textIsValid = NumberValidator_IsNumber(combined->data);
+  bdestroy(combined);
+  return textIsValid;
 }
