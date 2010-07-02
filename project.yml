@@ -19,6 +19,7 @@
     - tests/**
   :source:
     - source/**
+    - vendor/bstring/
 
 :defines:
   :common: &common_defines

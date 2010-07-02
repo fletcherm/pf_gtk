@@ -1,0 +1,3 @@
+The bstrlib.h and bstrlib.c files were extracted from the zip file
+exclusively so that ceedling won't try to compile the other c files
+in the distribution.
