@@ -1,6 +1,5 @@
 #include <gtk/gtk.h>
 #include "ApplicationHardware.h"
-#include "constants.h"
 
 static void(*whenCalculateClicked)(void) = 0;
 static void calculateClicked(GtkWidget *widget, gpointer data) {
