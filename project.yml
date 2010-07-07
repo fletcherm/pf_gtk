@@ -7,7 +7,7 @@
   :release_build: yes
 
 :release_build:
-  :output: mch_gui
+  :output: mvp_gtk
 
 :module_generator:
   :project_root: '.'
