@@ -9,7 +9,7 @@ void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
 }
 
 int ApplicationModel_Run() {
-  Conductors_RegisterForEvents();
+  Presenters_RegisterForEvents();
   applicationStartsEvent();
 }
 

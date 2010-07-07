@@ -1,6 +1,6 @@
-#include "Conductors.h"
-#include "ApplicationConductor.h"
+#include "Presenters.h"
+#include "ApplicationPresenter.h"
 
-void Conductors_RegisterForEvents() {
-  ApplicationConductor_RegisterEvents();
+void Presenters_RegisterForEvents() {
+  ApplicationPresenter_RegisterEvents();
 }

@@ -1,6 +1,6 @@
-#ifndef _Conductors_H
-#define _Conductors_H
+#ifndef _Presenters_H
+#define _Presenters_H
 
-void Conductors_RegisterForEvents();
+void Presenters_RegisterForEvents();
 
-#endif // _Conductors_H
+#endif // _Presenters_H

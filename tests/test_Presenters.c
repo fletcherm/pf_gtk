@@ -1,14 +1,14 @@
 #include "unity.h"
-#include "Conductors.h"
-#include "mock_ApplicationConductor.h"
+#include "Presenters.h"
+#include "mock_ApplicationPresenter.h"
 
 void setUp(void) {}
 
 void tearDown(void) {}
 
-void test_Conductors_RegisterForEvents_TellsAllConductorsToRegisterTheirEvents(void)
+void test_Presenters_RegisterForEvents_TellsAllPresentersToRegisterTheirEvents(void)
 {
-  ApplicationConductor_RegisterEvents_Expect();
+  ApplicationPresenter_RegisterEvents_Expect();
 
-  Conductors_RegisterForEvents();
+  Presenters_RegisterForEvents();
 }

@@ -1,12 +1,12 @@
 #include <gtk/gtk.h>
-#include "ApplicationHardware.h"
+#include "ApplicationView.h"
 #include "constants.h"
 
 static void(*whenCalculateClicked)(void) = 0;
 static void calculateClicked(GtkWidget *widget, gpointer data) {
   whenCalculateClicked();
 }
-void ApplicationHardware_WhenCalculateClicked(void(*callback)(void)) {
+void ApplicationView_WhenCalculateClicked(void(*callback)(void)) {
   whenCalculateClicked = callback;
 }
 
@@ -14,7 +14,7 @@ static void(*whenDivisorChanged)(gchar*) = 0;
 static void divisorChanged(GtkWidget *widget, gchar *new_text, gint new_text_length, gint *position, gpointer data) {
   whenDivisorChanged(new_text);
 }
-void ApplicationHardware_WhenDivisorChanged(void(*callback)(gchar*)) {
+void ApplicationView_WhenDivisorChanged(void(*callback)(gchar*)) {
   whenDivisorChanged = callback;
 }
 
@@ -22,7 +22,7 @@ static void(*whenDividendChanged)(gchar*) = 0;
 static void dividendChanged(GtkWidget *widget, gchar *new_text, gint new_text_length, gint *position, gpointer data) {
   whenDividendChanged(new_text);
 }
-void ApplicationHardware_WhenDividendChanged(void(*callback)(gchar*)) {
+void ApplicationView_WhenDividendChanged(void(*callback)(gchar*)) {
   whenDividendChanged = callback;
 }
 
@@ -31,7 +31,7 @@ GtkWidget *divisor;
 GtkWidget *result;
 GtkWidget *errorLabel;
 
-void ApplicationHardware_Build() {
+void ApplicationView_Build() {
   // divisor stuff
   GtkWidget *divisorLabel = gtk_label_new("Divisor");
   divisor = gtk_entry_new();
@@ -104,36 +104,36 @@ void ApplicationHardware_Build() {
   gtk_container_add(GTK_CONTAINER(window), bigBox);
 }
 
-void ApplicationHardware_Start() {
+void ApplicationView_Start() {
   gtk_main();
 }
 
-const char* ApplicationHardware_GetDivisor() {
+const char* ApplicationView_GetDivisor() {
   return gtk_entry_get_text(GTK_ENTRY(divisor));
 }
 
-const char* ApplicationHardware_GetDividend() {
+const char* ApplicationView_GetDividend() {
   return gtk_entry_get_text(GTK_ENTRY(dividend));
 }
 
-void ApplicationHardware_SetQuotient(int q) {
+void ApplicationView_SetQuotient(int q) {
   char quotient[DIVISION_FIELD_SIZE];
   sprintf(quotient, "%d", q);
   gtk_entry_set_text(GTK_ENTRY(result), quotient);
 }
 
-void ApplicationHardware_HideError() {
+void ApplicationView_HideError() {
   gtk_widget_hide(errorLabel);
 }
 
-void ApplicationHardware_ShowError() {
+void ApplicationView_ShowError() {
   gtk_widget_show(errorLabel);
 }
 
-void ApplicationHardware_UndoDivisorTextChange() {
+void ApplicationView_UndoDivisorTextChange() {
   g_signal_stop_emission_by_name(divisor, "insert-text");
 }
 
-void ApplicationHardware_UndoDividendTextChange() {
+void ApplicationView_UndoDividendTextChange() {
   g_signal_stop_emission_by_name(dividend, "insert-text");
 }

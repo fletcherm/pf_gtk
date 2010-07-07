@@ -1,38 +1,38 @@
 #include "types.h"
-#include "ApplicationConductor.h"
-#include "ApplicationHardware.h"
+#include "ApplicationPresenter.h"
+#include "ApplicationView.h"
 #include "ApplicationModel.h"
 
-void ApplicationConductor_RegisterEvents() {
-  ApplicationModel_WhenApplicationStarts(&ApplicationConductor_ApplicationStartCallback);
-  ApplicationHardware_WhenCalculateClicked(&ApplicationConductor_CalculateClickedCallback);
-  ApplicationHardware_WhenDivisorChanged(&ApplicationConductor_DivisorChangedCallback);
-  ApplicationHardware_WhenDividendChanged(&ApplicationConductor_DividendChangedCallback);
+void ApplicationPresenter_RegisterEvents() {
+  ApplicationModel_WhenApplicationStarts(&ApplicationPresenter_ApplicationStartCallback);
+  ApplicationView_WhenCalculateClicked(&ApplicationPresenter_CalculateClickedCallback);
+  ApplicationView_WhenDivisorChanged(&ApplicationPresenter_DivisorChangedCallback);
+  ApplicationView_WhenDividendChanged(&ApplicationPresenter_DividendChangedCallback);
 }
 
-void ApplicationConductor_ApplicationStartCallback() {
-  ApplicationHardware_Build();
-  ApplicationHardware_Start();
+void ApplicationPresenter_ApplicationStartCallback() {
+  ApplicationView_Build();
+  ApplicationView_Start();
 }
 
-void ApplicationConductor_CalculateClickedCallback() {
-  const char* divisor = ApplicationHardware_GetDivisor();
-  const char* dividend = ApplicationHardware_GetDividend();
+void ApplicationPresenter_CalculateClickedCallback() {
+  const char* divisor = ApplicationView_GetDivisor();
+  const char* dividend = ApplicationView_GetDividend();
   if (ApplicationModel_CheckArgs(divisor, dividend) == FALSE) {
-    ApplicationHardware_ShowError();
+    ApplicationView_ShowError();
     return;
   }
   int result = ApplicationModel_Divide(divisor,dividend);
-  ApplicationHardware_HideError();
-  ApplicationHardware_SetQuotient(result);
+  ApplicationView_HideError();
+  ApplicationView_SetQuotient(result);
 }
 
-void ApplicationConductor_DivisorChangedCallback(char* new_text) {
-  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDivisor(), new_text) == FALSE)
-    ApplicationHardware_UndoDivisorTextChange();
+void ApplicationPresenter_DivisorChangedCallback(char* new_text) {
+  if (ApplicationModel_CheckArgFormat(ApplicationView_GetDivisor(), new_text) == FALSE)
+    ApplicationView_UndoDivisorTextChange();
 }
 
-void ApplicationConductor_DividendChangedCallback(char* new_text) {
-  if (ApplicationModel_CheckArgFormat(ApplicationHardware_GetDividend(), new_text) == FALSE)
-    ApplicationHardware_UndoDividendTextChange();
+void ApplicationPresenter_DividendChangedCallback(char* new_text) {
+  if (ApplicationModel_CheckArgFormat(ApplicationView_GetDividend(), new_text) == FALSE)
+    ApplicationView_UndoDividendTextChange();
 }

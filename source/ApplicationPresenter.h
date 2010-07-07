@@ -1,10 +1,10 @@
-#ifndef _ApplicationConductor_H
-#define _ApplicationConductor_H
+#ifndef _ApplicationPresenter_H
+#define _ApplicationPresenter_H
 
-void ApplicationConductor_RegisterEvents();
-void ApplicationConductor_ApplicationStartCallback();
-void ApplicationConductor_CalculateClickedCallback();
-void ApplicationConductor_DivisorChangedCallback();
-void ApplicationConductor_DividendChangedCallback();
+void ApplicationPresenter_RegisterEvents();
+void ApplicationPresenter_ApplicationStartCallback();
+void ApplicationPresenter_CalculateClickedCallback();
+void ApplicationPresenter_DivisorChangedCallback();
+void ApplicationPresenter_DividendChangedCallback();
 
-#endif // _ApplicationConductor_H
+#endif // _ApplicationPresenter_H
