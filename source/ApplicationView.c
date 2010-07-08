@@ -61,9 +61,7 @@ void ApplicationView_Build() {
 
   // result stuff
   GtkWidget *resultLabel = gtk_label_new("Result");
-  result = gtk_entry_new();
-  gtk_entry_set_max_length(GTK_ENTRY(result), DIVISION_FIELD_SIZE);
-  gtk_editable_set_editable(GTK_EDITABLE(result), FALSE);
+  result = gtk_label_new("");
 
   GtkWidget *resultBox = gtk_hbox_new(TRUE, 0);
   gtk_box_pack_start(GTK_BOX(resultBox), resultLabel, FALSE, FALSE, 0);
@@ -118,7 +116,7 @@ const char* ApplicationView_GetDividend() {
 void ApplicationView_SetQuotient(int q) {
   char quotient[DIVISION_FIELD_SIZE];
   sprintf(quotient, "%d", q);
-  gtk_entry_set_text(GTK_ENTRY(result), quotient);
+  gtk_label_set_text(GTK_LABEL(result), quotient);
 }
 
 void ApplicationView_HideError() {
