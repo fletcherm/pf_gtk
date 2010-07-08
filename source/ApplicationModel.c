@@ -10,6 +10,7 @@ void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
 int ApplicationModel_Run() {
   Presenters_RegisterForEvents();
   applicationStartsEvent();
+  return 0;
 }
 
 int ApplicationModel_Divide(const char* dividend, const char* divisor) {
@@ -21,8 +22,9 @@ int ApplicationModel_ValidateArguments(const char* divisor, const char* dividend
 }
 
 int ApplicationModel_CheckArgumentFormat(const char* previouslyEnteredText, const char* newText) {
-  bstring combined, new;
-  bconcat(combined = bfromcstr(previouslyEnteredText), new = bfromcstr(newText));
+  bstring combined = bfromcstr(previouslyEnteredText);
+  bstring new = bfromcstr(newText);
+  bconcat(combined, new);
   bdestroy(new);
 
   int textIsValid = NumberValidator_IsNumber(combined->data);

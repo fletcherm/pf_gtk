@@ -25,10 +25,10 @@ void ApplicationView_WhenDividendChanged(void(*callback)(gchar*)) {
   whenDividendChanged = callback;
 }
 
-GtkWidget *dividend;
-GtkWidget *divisor;
-GtkWidget *result;
-GtkWidget *errorLabel;
+static GtkWidget *dividend;
+static GtkWidget *divisor;
+static GtkWidget *result;
+static GtkWidget *errorLabel;
 
 void ApplicationView_Build() {
   // divisor stuff
