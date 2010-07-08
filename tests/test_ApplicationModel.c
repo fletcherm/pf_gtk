@@ -1,3 +1,4 @@
+#include "bstrlib.h"
 #include "types.h"
 #include "unity.h"
 #include "ApplicationModel.h"
@@ -62,8 +63,4 @@ void test_ApplicationModel_CheckArgumentFormat_IsNotOkWhenArgIsNotANumber() {
   NumberValidator_IsNumber_ExpectAndReturn("evenflow", FALSE);
 
   TEST_ASSERT_FALSE(ApplicationModel_CheckArgumentFormat("even", "flow"));
-}
-
-void test_ApplicationModel_CheckArgumentFormat_DoesNotValidateArgThatIsTooLong() {
-  TEST_IGNORE();
 }

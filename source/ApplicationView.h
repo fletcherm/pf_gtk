@@ -1,6 +1,8 @@
 #ifndef _APPLICATION_VIEW_
 #define _APPLICATION_VIEW_
 
+#define DIVISION_FIELD_SIZE 10
+
 void ApplicationView_WhenCalculateClicked(void(*callback)(void));
 void ApplicationView_WhenDivisorChanged(void(*callback)(char* new_text));
 void ApplicationView_WhenDividendChanged(void(*callback)(char* new_text));

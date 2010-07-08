@@ -126,7 +126,6 @@
       - -lgthread-2.0
       - -lrt
       - -lglib-2.0
-      - build/tests/out/bstrlib.o
       - ${1}
       - -o ${2} 
   :release_compiler:
