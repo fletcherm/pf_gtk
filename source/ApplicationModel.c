@@ -8,7 +8,7 @@ void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
 }
 
 int ApplicationModel_Run() {
-  Conductors_RegisterForEvents();
+  Presenters_RegisterForEvents();
   applicationStartsEvent();
 }
 
@@ -16,11 +16,11 @@ int ApplicationModel_Divide(const char* dividend, const char* divisor) {
   return atoi(dividend) / atoi(divisor);
 }
 
-int ApplicationModel_CheckArgs(const char* divisor, const char* dividend) {
+int ApplicationModel_ValidateArguments(const char* divisor, const char* dividend) {
   return (atoi(dividend) == 0) ? FALSE : TRUE;
 }
 
-int ApplicationModel_CheckArgFormat(const char* previouslyEnteredText, const char* newText) {
+int ApplicationModel_CheckArgumentFormat(const char* previouslyEnteredText, const char* newText) {
   bstring combined, new;
   bconcat(combined = bfromcstr(previouslyEnteredText), new = bfromcstr(newText));
   bdestroy(new);
