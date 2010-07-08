@@ -17,11 +17,11 @@ int ApplicationModel_Divide(const char* dividend, const char* divisor) {
   return atoi(dividend) / atoi(divisor);
 }
 
-int ApplicationModel_CheckArgs(const char* divisor, const char* dividend) {
+int ApplicationModel_ValidateArguments(const char* divisor, const char* dividend) {
   return (atoi(dividend) == 0) ? FALSE : TRUE;
 }
 
-int ApplicationModel_CheckArgFormat(const char* previouslyEnteredText, const char* newText) {
+int ApplicationModel_CheckArgumentFormat(const char* previouslyEnteredText, const char* newText) {
   char entireText[DIVISION_FIELD_SIZE];
   sprintf(entireText, "%s%s", previouslyEnteredText, newText);
   return NumberValidator_IsNumber(entireText);

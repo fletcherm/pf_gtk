@@ -27,7 +27,7 @@ void test_ApplicationPresenter_InitializesTheApplicationAndStartsTheGui(void)
 void test_ApplicationPresenter_CalculatesTheQuotientWhenClicked() {
   ApplicationView_GetDivisor_ExpectAndReturn("21");
   ApplicationView_GetDividend_ExpectAndReturn("7");
-  ApplicationModel_CheckArgs_ExpectAndReturn("21", "7", TRUE);
+  ApplicationModel_ValidateArguments_ExpectAndReturn("21", "7", TRUE);
   ApplicationModel_Divide_ExpectAndReturn("21", "7", 3);
   ApplicationView_HideError_Expect();
   ApplicationView_SetQuotient_Expect(3);
@@ -38,7 +38,7 @@ void test_ApplicationPresenter_CalculatesTheQuotientWhenClicked() {
 void test_ApplicationPresenter_ShowsErrorWhenBadArgs() {
   ApplicationView_GetDivisor_ExpectAndReturn("21");
   ApplicationView_GetDividend_ExpectAndReturn("0");
-  ApplicationModel_CheckArgs_ExpectAndReturn("21", "0", FALSE);
+  ApplicationModel_ValidateArguments_ExpectAndReturn("21", "0", FALSE);
   ApplicationView_ShowError_Expect();
 
   ApplicationPresenter_CalculateClickedCallback();
@@ -46,14 +46,14 @@ void test_ApplicationPresenter_ShowsErrorWhenBadArgs() {
 
 void test_ApplicationPresenter_AllowsNumbersToBeEnteredForTheDivisor() {
   ApplicationView_GetDivisor_ExpectAndReturn("21");
-  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", "3", TRUE);
+  ApplicationModel_CheckArgumentFormat_ExpectAndReturn("21", "3", TRUE);
 
   ApplicationPresenter_DivisorChangedCallback("3");
 }
 
 void test_ApplicationPresenter_DoesNotAllowNonNumbersToBeEnteredForTheDivisor() {
   ApplicationView_GetDivisor_ExpectAndReturn("21");
-  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", "j", FALSE);
+  ApplicationModel_CheckArgumentFormat_ExpectAndReturn("21", "j", FALSE);
   ApplicationView_UndoDivisorTextChange_Expect();
 
   ApplicationPresenter_DivisorChangedCallback("j");
@@ -61,14 +61,14 @@ void test_ApplicationPresenter_DoesNotAllowNonNumbersToBeEnteredForTheDivisor() 
 
 void test_ApplicationPresenter_AllowsNumbersToBeEnteredForTheDividend() {
   ApplicationView_GetDividend_ExpectAndReturn("21");
-  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", "7", TRUE);
+  ApplicationModel_CheckArgumentFormat_ExpectAndReturn("21", "7", TRUE);
 
   ApplicationPresenter_DividendChangedCallback("7");
 }
 
 void test_ApplicationPresenter_DoesNotAllowNonNumbersToBeEnteredForTheDividend() {
   ApplicationView_GetDividend_ExpectAndReturn("21");
-  ApplicationModel_CheckArgFormat_ExpectAndReturn("21", "rescue", FALSE);
+  ApplicationModel_CheckArgumentFormat_ExpectAndReturn("21", "rescue", FALSE);
   ApplicationView_UndoDividendTextChange_Expect();
 
   ApplicationPresenter_DividendChangedCallback("rescue");

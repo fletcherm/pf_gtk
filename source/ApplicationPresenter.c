@@ -18,7 +18,7 @@ void ApplicationPresenter_ApplicationStartCallback() {
 void ApplicationPresenter_CalculateClickedCallback() {
   const char* divisor = ApplicationView_GetDivisor();
   const char* dividend = ApplicationView_GetDividend();
-  if (ApplicationModel_CheckArgs(divisor, dividend) == FALSE) {
+  if (ApplicationModel_ValidateArguments(divisor, dividend) == FALSE) {
     ApplicationView_ShowError();
     return;
   }
@@ -28,11 +28,11 @@ void ApplicationPresenter_CalculateClickedCallback() {
 }
 
 void ApplicationPresenter_DivisorChangedCallback(char* new_text) {
-  if (ApplicationModel_CheckArgFormat(ApplicationView_GetDivisor(), new_text) == FALSE)
+  if (ApplicationModel_CheckArgumentFormat(ApplicationView_GetDivisor(), new_text) == FALSE)
     ApplicationView_UndoDivisorTextChange();
 }
 
 void ApplicationPresenter_DividendChangedCallback(char* new_text) {
-  if (ApplicationModel_CheckArgFormat(ApplicationView_GetDividend(), new_text) == FALSE)
+  if (ApplicationModel_CheckArgumentFormat(ApplicationView_GetDividend(), new_text) == FALSE)
     ApplicationView_UndoDividendTextChange();
 }

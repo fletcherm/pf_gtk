@@ -39,31 +39,31 @@ void test_ApplicationModel_Divide_WithNonEvenNumber()
   TEST_ASSERT_EQUAL(-2, ApplicationModel_Divide("-5", "2"));
 }
 
-void test_ApplicationModel_CheckArgs_ArgsAreOK()
+void test_ApplicationModel_ValidateArguments_ArgsAreOK()
 {
-  TEST_ASSERT(ApplicationModel_CheckArgs("1", "1"));
-  TEST_ASSERT(ApplicationModel_CheckArgs("21", "1"));
-  TEST_ASSERT(ApplicationModel_CheckArgs("-9", "1"));
-  TEST_ASSERT(ApplicationModel_CheckArgs("-9", "-7777"));
+  TEST_ASSERT(ApplicationModel_ValidateArguments("1", "1"));
+  TEST_ASSERT(ApplicationModel_ValidateArguments("21", "1"));
+  TEST_ASSERT(ApplicationModel_ValidateArguments("-9", "1"));
+  TEST_ASSERT(ApplicationModel_ValidateArguments("-9", "-7777"));
 }
 
-void test_ApplicationModel_CheckArgs_DividendIsZero()
+void test_ApplicationModel_ValidateArguments_DividendIsZero()
 {
-  TEST_ASSERT_FALSE(ApplicationModel_CheckArgs("-9", "0"));
+  TEST_ASSERT_FALSE(ApplicationModel_ValidateArguments("-9", "0"));
 }
 
-void test_ApplicationModel_CheckArgFormat_IsOkWhenArgIsANumber() {
+void test_ApplicationModel_CheckArgumentFormat_IsOkWhenArgIsANumber() {
   NumberValidator_IsNumber_ExpectAndReturn("32122", TRUE);
 
-  TEST_ASSERT(ApplicationModel_CheckArgFormat("321", "22"));
+  TEST_ASSERT(ApplicationModel_CheckArgumentFormat("321", "22"));
 }
 
-void test_ApplicationModel_CheckArgFormat_IsNotOkWhenArgIsNotANumber() {
+void test_ApplicationModel_CheckArgumentFormat_IsNotOkWhenArgIsNotANumber() {
   NumberValidator_IsNumber_ExpectAndReturn("evenflow", FALSE);
 
-  TEST_ASSERT_FALSE(ApplicationModel_CheckArgFormat("even", "flow"));
+  TEST_ASSERT_FALSE(ApplicationModel_CheckArgumentFormat("even", "flow"));
 }
 
-void test_ApplicationModel_CheckArgFormat_DoesNotValidateArgThatIsTooLong() {
+void test_ApplicationModel_CheckArgumentFormat_DoesNotValidateArgThatIsTooLong() {
   TEST_IGNORE();
 }
