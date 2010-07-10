@@ -64,15 +64,22 @@ class Configurator
     cmock = {}    
     cmock = config[:cmock] if not config[:cmock].nil?
 
-    cmock[:mock_prefix] = 'Mock'                                                 if (cmock[:mock_prefix].nil?)
-    cmock[:enforce_strict_ordering] = true                                       if (cmock[:enforce_strict_ordering].nil?)
-    cmock[:mock_path] = File.join(config[:project][:build_root], 'tests/mocks')  if (cmock[:mock_path].nil?)
-    cmock[:verbosity] = config[:project][:verbosity]                             if (cmock[:verbosity].nil?)
+    cmock[:mock_prefix] = 'Mock'                                                            if (cmock[:mock_prefix].nil?)
+    cmock[:enforce_strict_ordering] = true                                                  if (cmock[:enforce_strict_ordering].nil?)
+    cmock[:mock_path] = File.join(config[:project][:build_root], TESTS_BASE_PATH, 'mocks')  if (cmock[:mock_path].nil?)
+    cmock[:verbosity] = config[:project][:verbosity]                                        if (cmock[:verbosity].nil?)
 
-    cmock[:plugins] = []               if (cmock[:plugins].nil?)
+    cmock[:plugins] = []                             if (cmock[:plugins].nil?)
     cmock[:plugins].map! { |plugin| plugin.to_sym }
-    cmock[:plugins] << (:cexception)   if (!cmock[:plugins].include?(:cexception) and (config[:project][:use_exceptions]))
+    cmock[:plugins] << (:cexception)                 if (!cmock[:plugins].include?(:cexception) and (config[:project][:use_exceptions]))
 
+    cmock[:unity_helper] = false                     if (cmock[:unity_helper].nil?)
+    
+    if (cmock[:unity_helper])
+      cmock[:includes] << File.basename(cmock[:unity_helper])
+      cmock[:includes].uniq!
+    end
+    
     config[:cmock] = cmock if config[:cmock].nil?
 
     @cmock_config_hash = config[:cmock].clone
@@ -80,10 +87,15 @@ class Configurator
 
 
   # grab tool names from yaml and insert into tool structures so available for error messages
-  def populate_tool_names(config)
+  def populate_tool_names_and_stderr_redirect(config)
     config[:tools].each_key do |name|
       tool = config[:tools][name]
-      tool[:name] = name.to_s
+      
+      # populate name if not given      
+      tool[:name] = name.to_s if (tool[:name].nil?)
+
+      # populate stderr redirect option
+      tool[:stderr_redirect] = StdErrRedirect::NONE if (tool[:stderr_redirect].nil?)
     end
   end
   
@@ -98,6 +110,9 @@ class Configurator
     config_plugins.each do |plugin|
       config.deep_merge( @yaml_wrapper.load(plugin) )
     end
+    
+    # special plugin setting for results printing
+    config[:plugins][:display_raw_test_results] = true if (config[:plugins][:display_raw_test_results].nil?)
   end
 
   

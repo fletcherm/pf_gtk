@@ -1,23 +1,28 @@
 require 'constants'
+require 'system_wrapper'
 require 'file_path_utils'
 
 
 DEFAULT_TEST_COMPILER_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_test_compiler',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST_AND_SOURCE_AND_INCLUDE'},
     {"-D$" => 'COLLECTION_DEFINES_TEST'},
+    {"$" => 'TEST_COMPILER_ARGUMENTS'},
     "-c ${1}",
     "-o ${2}",
     ]
   }
 
 DEFAULT_TEST_LINKER_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_test_linker',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
+    {"$" => 'TEST_LINKER_ARGUMENTS'},
     "${1}",
     "-o ${2}",
     ]
@@ -26,21 +31,27 @@ DEFAULT_TEST_LINKER_TOOL = {
 DEFAULT_TEST_FIXTURE_TOOL = {
   :executable => '${1}',
   :name => 'default_test_fixture',
-  :arguments => []
+  :stderr_redirect => StdErrRedirect::AUTO,
+  :arguments => [
+    {"$" => 'TEST_FIXTURE_ARGUMENTS'},
+    ]
   }
 
 
 
 DEFAULT_TEST_INCLUDES_PREPROCESSOR_TOOL = {
-  :executable => FilePathUtils.ext_exe('cpp'),
+  :executable => FilePathUtils.os_executable_ext('cpp'),
   :name => 'default_test_includes_preprocessor',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     '-MM', '-MG',
     {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_INCLUDE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST'},
+    {"-I\"$\"" => 'COLLECTION_PATHS_SUPPORT'},
     {"-D$" => 'COLLECTION_DEFINES_TEST'},
     {"-D$" => 'DEFINES_TEST_PREPROCESS'},
+    {"$" => 'TEST_INCLUDES_PREPROCESSOR_ARGUMENTS'},
     '-w',
     '-nostdinc',
     "\"${1}\""
@@ -48,21 +59,25 @@ DEFAULT_TEST_INCLUDES_PREPROCESSOR_TOOL = {
   }
 
 DEFAULT_TEST_FILE_PREPROCESSOR_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_test_file_preprocessor',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     '-E',
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST_AND_SOURCE_AND_INCLUDE'},
+    {"-I\"$\"" => 'PATHS_TEST_TOOLCHAIN_INCLUDE'},
     {"-D$" => 'COLLECTION_DEFINES_TEST'},
     {"-D$" => 'DEFINES_TEST_PREPROCESS'},
+    {"$" => 'TEST_FILE_PREPROCESSOR_ARGUMENTS'},
     "\"${1}\"",
     "-o \"${2}\""
     ]
   }
 
 DEFAULT_TEST_DEPENDENCIES_GENERATOR_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_test_dependencies_generator',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST_AND_SOURCE_AND_INCLUDE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'},
@@ -71,13 +86,15 @@ DEFAULT_TEST_DEPENDENCIES_GENERATOR_TOOL = {
     "-MT \"${3}\"",
     '-MM', '-MD', '-MG',
     "-MF \"${2}\"",
+    {"$" => 'TEST_DEPENDENCIES_GENERATOR_ARGUMENTS'},
     "-c \"${1}\"",
     ]
   }
 
 DEFAULT_RELEASE_DEPENDENCIES_GENERATOR_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_release_dependencies_generator',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_AND_INCLUDE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_RELEASE_TOOLCHAIN_INCLUDE'},
@@ -86,38 +103,45 @@ DEFAULT_RELEASE_DEPENDENCIES_GENERATOR_TOOL = {
     "-MT \"${3}\"",
     '-MM', '-MD', '-MG',
     "-MF \"${2}\"",
+    {"$" => 'RELEASE_DEPENDENCIES_GENERATOR_ARGUMENTS'},
     "-c \"${1}\"",
     ]
   }
 
 
 DEFAULT_RELEASE_COMPILER_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_release_compiler',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     {"-I\"$\"" => 'COLLECTION_PATHS_RELEASE_TOOLCHAIN_INCLUDE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_AND_INCLUDE'},
     {"-D$" => 'DEFINES_RELEASE'},        
+    {"$" => 'RELEASE_COMPILER_ARGUMENTS'},
     "-c \"${1}\"",
     "-o \"${2}\"",
     ]
   }
 
 DEFAULT_RELEASE_ASSEMBLER_TOOL = {
-  :executable => FilePathUtils.ext_exe('as'),
+  :executable => FilePathUtils.os_executable_ext('as'),
   :name => 'default_release_assembler',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
     {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_AND_INCLUDE'},
     {"-I\"$\"" => 'COLLECTION_PATHS_TARGET_INCLUDE'},
+    {"$" => 'RELEASE_ASSEMBLER_ARGUMENTS'},
     '${1}',
     "-o \"${2}\"",
     ]
   }
 
 DEFAULT_RELEASE_LINKER_TOOL = {
-  :executable => FilePathUtils.ext_exe('gcc'),
+  :executable => FilePathUtils.os_executable_ext('gcc'),
   :name => 'default_release_linker',
+  :stderr_redirect => StdErrRedirect::NONE,
   :arguments => [
+    {"$" => 'RELEASE_LINKER_ARGUMENTS'},
     '${1}',
     "-o \"${2}\"",
     ]
@@ -151,7 +175,11 @@ DEFAULT_CEEDLING_CONFIG = {
       :release_toolchain_include => [],
     },
     
-    :environment => {},
+    # unlike other top-level entries, environment's value is an array to preserve order
+    :environment => [
+      # when evaluated, this provides wider text field for rake task comments
+      {:rake_columns => '120'},
+    ],
     
     :defines => {
       :test => [],
@@ -165,7 +193,7 @@ DEFAULT_CEEDLING_CONFIG = {
       :source => '.c',
       :assembly => '.s',
       :object => '.o',
-      :executable => '.out',
+      :executable => ( SystemWrapper.is_windows? ? '.exe' : '.out' ),
       :testpass => '.pass',
       :testfail => '.fail',
       :dependencies => '.d',
@@ -185,6 +213,22 @@ DEFAULT_CEEDLING_CONFIG = {
 
     # all tools populated while building up config structure
     :tools => {},
+
+    # empty argument lists for default tools
+    # (these can be overridden in project file to add arguments to tools without totally redefining tools)
+    :test_compiler => { :arguments => [] },
+    :test_linker   => { :arguments => [] },
+    :test_fixture  => { 
+      :arguments => [],
+      :link_objects => [], # compiled object files to always be linked in (e.g. cmock.o if using mocks)
+    },
+    :test_includes_preprocessor  => { :arguments => [] },
+    :test_file_preprocessor      => { :arguments => [] },
+    :test_dependencies_generator => { :arguments => [] },
+    :release_compiler  => { :arguments => [] },
+    :release_linker    => { :arguments => [] },
+    :release_assembler => { :arguments => [] },
+    :release_dependencies_generator => { :arguments => [] },
 
     :plugins => {
       :base_path => NULL_FILE_PATH,

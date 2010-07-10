@@ -1,4 +1,3 @@
-...
 
 file_wrapper:
 
@@ -31,12 +30,15 @@ project_file_loader:
 
 tool_executor:
   compose:
+    - configurator
     - tool_executor_helper
     - streaminator
     - system_wrapper
 
 tool_executor_helper:
-  compose: streaminator
+  compose:
+    - streaminator
+    - system_wrapper
 
 configurator:
   compose:
@@ -177,7 +179,7 @@ dependinator:
     - test_includes_extractor
     - file_finder            
     - file_path_utils        
-    - rake_wrapper           
+    - rake_wrapper
 
 preprocessinator:
   compose:
@@ -221,19 +223,18 @@ preprocessinator_extractor:
 test_invoker:
   compose:
     - test_invoker_helper
-    - configurator
+    - streaminator
     - preprocessinator
     - task_invoker
     - dependinator
     - file_finder
-    - file_wrapper    
+    - file_path_utils
 
 test_invoker_helper:
   compose:
     - configurator
     - task_invoker
     - dependinator
-    - file_finder
     - file_path_utils
     - file_wrapper
     - rake_wrapper

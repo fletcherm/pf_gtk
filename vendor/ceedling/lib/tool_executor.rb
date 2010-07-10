@@ -3,7 +3,7 @@ require 'constants'
 
 class ToolExecutor
 
-  constructor :tool_executor_helper, :streaminator, :system_wrapper
+  constructor :configurator, :tool_executor_helper, :streaminator, :system_wrapper
 
   def setup
     @tool_name  = ''
@@ -18,20 +18,23 @@ class ToolExecutor
     # basic premise is to iterate top to bottom through arguments using '$' as 
     #  a string replacement indicator to expand globals or inline yaml arrays
     #  into command line arguments via format strings
-    return "#{expandify_element(@executable, *args)} #{build_arguments(tool_config[:arguments], *args)}".strip
+    return [
+      @tool_executor_helper.osify_path_separators( expandify_element(@executable, *args) ),
+      build_arguments(tool_config[:arguments], *args),
+      @tool_executor_helper.stderr_redirect_addendum(tool_config) ].compact.join(' ')
   end
 
 
   # shell out, execute command, and return response
-  def exec(command, args=[], boom=true)
+  def exec(command, args=[], options={:boom => true})
     command_str = "#{command} #{args.join(' ')}".strip
     
     shell_result = @system_wrapper.shell_execute(command_str)
 
     @tool_executor_helper.print_happy_results(command_str, shell_result)
-    @tool_executor_helper.print_error_results(command_str, shell_result) if boom
+    @tool_executor_helper.print_error_results(command_str, shell_result) if (options[:boom])
 
-    raise if ((shell_result[:exit_code] != 0) and boom)
+    raise if ((shell_result[:exit_code] != 0) and options[:boom])
 
     return shell_result[:output]
   end
@@ -43,7 +46,7 @@ class ToolExecutor
   def build_arguments(config, *args)
     build_string = ''
     
-    return '' if (config.nil?)
+    return nil if (config.nil?)
     
     # iterate through each argument
 
@@ -64,7 +67,9 @@ class ToolExecutor
       build_string.concat(' ')
     end
     
-    return build_string.strip
+    build_string.strip!
+    return build_string if (build_string.length > 0)
+    return nil
   end
 
 
