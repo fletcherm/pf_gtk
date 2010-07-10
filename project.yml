@@ -1,6 +1,6 @@
 ---
 :project:
-  :use_preprocessor: TRUE
+  :use_test_preprocessor: TRUE
   :use_auxiliary_dependencies: TRUE
   :build_root: build
   :release_build: yes
