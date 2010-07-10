@@ -2,7 +2,6 @@
 #include "types.h"
 #include "unity.h"
 #include "ApplicationModel.h"
-#include "mock_Presenters.h"
 #include "mock_NumberValidator.h"
 
 bool application_starts_called;
@@ -20,7 +19,6 @@ void application_starts(void) {
 void test_ApplicationModel_StartsTheApplication(void)
 {
   ApplicationModel_WhenApplicationStarts(&application_starts);
-  Presenters_RegisterForEvents_Expect();
 
   TEST_ASSERT_EQUAL(0, ApplicationModel_Run());
   TEST_ASSERT(application_starts_called);

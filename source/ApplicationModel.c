@@ -8,7 +8,6 @@ void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
 }
 
 int ApplicationModel_Run() {
-  Presenters_RegisterForEvents();
   applicationStartsEvent();
   return 0;
 }

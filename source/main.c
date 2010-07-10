@@ -1,6 +1,8 @@
 #include "ApplicationModel.h"
+#include "Presenters.h"
 
 int main(int argc, char* argv[]) {
   gtk_init(&argc, &argv);
-  return ApplicationModel_Run();;
+  Presenters_RegisterForEvents();
+  return ApplicationModel_Run();
 }
