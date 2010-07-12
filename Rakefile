@@ -4,7 +4,7 @@ task :default => :run
 
 desc "run hello"
 task :run => "release" do
-  sh "build/artifacts/release/mvp_gtk"
+  sh "build/artifacts/release/pf_gtk"
 end
 
 desc "build it"

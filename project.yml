@@ -6,7 +6,7 @@
   :release_build: yes
 
 :release_build:
-  :output: mvp_gtk
+  :output: pf_gtk
 
 :module_generator:
   :project_root: '.'
