@@ -9,7 +9,6 @@
   :output: pf_gtk
 
 :module_generator:
-  :project_root: '.'
   :source_root: source
   :test_root: tests
 
@@ -32,7 +31,8 @@
     Status_T: INT
 
 :plugins:
-  :base_path: vendor/ceedling/plugins
+  :load_paths:
+    - "#{File.join(PROJECT_CEEDLING_ROOT, 'plugins')}"
   :enabled:
     - stdout_pretty_tests_report
     - module_generator
@@ -41,7 +41,7 @@
   :test_compiler: &compiler_argz
     :executable: gcc
     :arguments:
-      - -I"$": COLLECTION_PATHS_TEST_AND_SOURCE_AND_INCLUDE
+      - -I"$": COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR
       - "#{`pkg-config --cflags gtk+-2.0`}"
       - "#{`pkg-config --cflags libpcre`}"
       - -c ${1} 
