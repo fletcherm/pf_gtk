@@ -1,17 +1,17 @@
 
 class GeneratorTestRunner
 
-  constructor :configurator, :file_wrapper
-    
+  constructor :configurator, :file_path_utils, :file_wrapper
+
   
-  def find_test_cases(test_file_to_parse, raw_test_file)
+  def find_test_cases(test_file)
     tests = []
     tests_and_line_numbers = []
     lines = []
     
     # if we don't have preprocessor assistance, do some basic preprocessing of our own
     if (not @configurator.project_use_test_preprocessor)
-      source = @file_wrapper.read(test_file_to_parse)
+      source = @file_wrapper.read(test_file)
     
       # remove line comments
       source = source.gsub(/\/\/.*$/, '')
@@ -22,7 +22,7 @@ class GeneratorTestRunner
       lines = source.split(/(^\s*\#.*$) | (;|\{|\}) /x) # match ;, {, and } as end of lines
     # otherwise, read the preprocessed file raw
     else
-      lines = @file_wrapper.read(test_file_to_parse).split(/;|\{|\}/)
+      lines = @file_wrapper.read( @file_path_utils.form_preprocessed_file_filepath(test_file) ).split(/;|\{|\}/)
     end
     
     # step 1. find test functions in (possibly preprocessed) file
@@ -35,7 +35,7 @@ class GeneratorTestRunner
     
     # step 2. associate test functions with line numbers in (non-preprocessed) original file
     # (note that this time we must scan file contents broken up by end of lines)
-    raw_lines = @file_wrapper.read(raw_test_file).split("\n")
+    raw_lines = @file_wrapper.read(test_file).split("\n")
     raw_index = 0
     
     tests.each do |test|
@@ -157,23 +157,27 @@ class GeneratorTestRunner
       tab = '      ' if (use_exceptions)
 
       output << "\n"
-      output << "static void runTest(UnityTestFunction test)\n"
+      output << "static void TestRun(UnityTestFunction Func, const char* FuncName, const int FuncLineNum)\n"
       output << "{\n"
+      output << "  Unity.CurrentTestName = FuncName;\n"
+      output << "  Unity.CurrentTestLineNumber = FuncLineNum;\n"
+      output << "  Unity.NumberOfTests++;\n"
       output << "  if (TEST_PROTECT())\n"
       output << "  {\n"
       output << "    CEXCEPTION_T e;\n"   if use_exceptions
       output << "    Try {\n"             if use_exceptions
       output << "#{tab}CMock_Init();\n"   unless (mock_list.empty?) 
       output << "#{tab}setUp();\n"
-      output << "#{tab}test();\n"
+      output << "#{tab}Func();\n"
       output << "#{tab}CMock_Verify();\n" unless (mock_list.empty?)
-      output << "    } Catch(e) { TEST_FAIL(\"Unhandled Exception!\"); }\n" if use_exceptions
+      output << "    } Catch(e) { TEST_FAIL_MESSAGE(\"Unhandled Exception!\"); }\n" if use_exceptions
       output << "  }\n"
       output << "  CMock_Destroy();\n"    unless (mock_list.empty?)
-      output << "  if (TEST_PROTECT())\n"
+      output << "  if (TEST_PROTECT() && !(Unity.CurrentTestIgnored))\n"
       output << "  {\n"
       output << "    tearDown();\n"
       output << "  }\n"
+      output << "  UnityConcludeTest();\n"
       output << "}\n"
     end
     
@@ -194,8 +198,7 @@ class GeneratorTestRunner
     end
 
     output << "\n"
-    output << "  UnityEnd();\n"
-    output << "  return 0;\n"
+    output << "  return UnityEnd();\n"
     output << "}\n"
     output << "\n"
   end

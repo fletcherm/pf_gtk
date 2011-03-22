@@ -17,7 +17,8 @@ class PreprocessinatorExtractor
           contents << line
         end
       end
-      extract = true if (line =~ /^#.*#{Regexp.escape(File.basename(filepath))}/)
+      # extract = true if (line =~ /^#.*#{Regexp.escape(File.basename(filepath))}/)
+      extract = true if (line =~ /^#.*(\s|\/|\\|\")#{Regexp.escape(File.basename(filepath))}/)
     end
 
     return contents

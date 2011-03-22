@@ -1,8 +1,0 @@
-road:
-
-using_namespace Animal:
-
-  garfield:
-    class: Cat
-    compose: road
-

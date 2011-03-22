@@ -17,7 +17,7 @@ class ToolExecutor
 
     # basic premise is to iterate top to bottom through arguments using '$' as 
     #  a string replacement indicator to expand globals or inline yaml arrays
-    #  into command line arguments via format strings
+    #  into command line arguments via substitution strings
     return [
       @tool_executor_helper.osify_path_separators( expandify_element(@executable, *args) ),
       build_arguments(tool_config[:arguments], *args),
@@ -36,7 +36,7 @@ class ToolExecutor
 
     raise if ((shell_result[:exit_code] != 0) and options[:boom])
 
-    return shell_result[:output]
+    return shell_result
   end
 
   
@@ -50,21 +50,22 @@ class ToolExecutor
     
     # iterate through each argument
 
-    # the yaml blog array needs to be flattened so that yaml substitution
+    # the yaml blob array needs to be flattened so that yaml substitution
     # is handled correctly, since it creates a nested array when an anchor is
     # dereferenced
     config.flatten.each do |element|
+      argument = ''
       
       case(element)
         # if we find a simple string then look for string replacement operators
         #  and expand with the parameters in this method's argument list
-        when String then build_string.concat( expandify_element(element, *args) )
-        # if we find a hash, then we grab the key as a format string and expand the
-        #  hash's value(s) within that format string
-        when Hash   then build_string.concat( dehashify_argument_elements(element) )
+        when String then argument = expandify_element(element, *args)
+        # if we find a hash, then we grab the key as a substitution string and expand the
+        #  hash's value(s) within that substitution string
+        when Hash   then argument = dehashify_argument_elements(element)
       end
 
-      build_string.concat(' ')
+      build_string.concat("#{argument} ") if (argument.length > 0)
     end
     
     build_string.strip!
@@ -96,46 +97,55 @@ class ToolExecutor
     element.sub!(/\\\$/, '$')
     element.strip!
 
+    # handle inline ruby execution
+    if (element =~ RUBY_EVAL_REPLACEMENT_PATTERN)
+      element.replace(eval($1))
+    end
+
     build_string = ''
-    # handle escaped $
-    scrubbed_element = element.sub(/\\\$/, '$')
 
     # handle array or anything else passed into method to be expanded in place of replacement operators
     case (to_process)
-      when Array then to_process.each {|value| build_string.concat( "#{scrubbed_element.sub(match, value.to_s)} " ) }
-      else build_string.concat( scrubbed_element.sub(match, to_process.to_s) )
+      when Array then to_process.each {|value| build_string.concat( "#{element.sub(match, value.to_s)} " ) } if (to_process.size > 0)
+      else build_string.concat( element.sub(match, to_process.to_s) )
     end
 
-    # handle ruby string replacement
+    # handle inline ruby string substitution
     if (build_string =~ RUBY_STRING_REPLACEMENT_PATTERN)
-      build_string.replace(@system_wrapper.eval(build_string))
+      build_string.replace(@system_wrapper.module_eval(build_string))
     end
     
     return build_string.strip
   end
 
   
-  # handle argument hash: keys are format strings, values are data to be expanded within format strings
+  # handle argument hash: keys are substitution strings, values are data to be expanded within substitution strings
   def dehashify_argument_elements(hash)
     build_string = ''
     elements = []
 
-    # grab the format string (hash key)
-    format = hash.keys[0].to_s
-    # grab the string(s) to squirt into the format string (hash value)
+    # grab the substitution string (hash key)
+    substitution = hash.keys[0].to_s
+    # grab the string(s) to squirt into the substitution string (hash value)
     expand = hash[hash.keys[0]]
 
     if (expand.nil?)
-      @streaminator.stderr_puts("ERROR: Tool '#{@tool_name}' could not expand nil elements for format string '#{format}'.", Verbosity::ERRORS)
+      @streaminator.stderr_puts("ERROR: Tool '#{@tool_name}' could not expand nil elements for substitution string '#{substitution}'.", Verbosity::ERRORS)
       raise
     end
     
-    expand.each do |item|
-      # string substitution
-      if (item =~ RUBY_STRING_REPLACEMENT_PATTERN)
-        elements << @system_wrapper.eval(item)
+    # array-ify expansion input if only a single string
+    expansion = ((expand.class == String) ? [expand] : expand)
+    
+    expansion.each do |item|
+      # code eval substitution
+      if (item =~ RUBY_EVAL_REPLACEMENT_PATTERN)
+        elements << eval($1)
+      # string eval substitution
+      elsif (item =~ RUBY_STRING_REPLACEMENT_PATTERN)
+        elements << @system_wrapper.module_eval(item)
       # global constants
-      elsif (Object.constants.include?(item))
+      elsif (@system_wrapper.constants_include?(item))
         const = Object.const_get(item)
         if (const.nil?)
           @streaminator.stderr_puts("ERROR: Tool '#{@tool_name}' found constant '#{item}' to be nil.", Verbosity::ERRORS)
@@ -143,20 +153,25 @@ class ToolExecutor
         else
           elements << const
         end
-      # plain ol' string or array
-      else
+      elsif (item.class == Array)
         elements << item
+      elsif (item.class == String)
+        @streaminator.stderr_puts("ERROR: Tool '#{@tool_name}' cannot expand nonexistent value '#{item}' for substitution string '#{substitution}'.", Verbosity::ERRORS)
+        raise        
+      else
+        @streaminator.stderr_puts("ERROR: Tool '#{@tool_name}' cannot expand value having type '#{item.class}' for substitution string '#{substitution}'.", Verbosity::ERRORS)
+        raise        
       end
     end
     
-    # expand elements (whether string or array) into format string & replace escaped '\$'
+    # expand elements (whether string or array) into substitution string & replace escaped '\$'
     elements.flatten!
     elements.each do |element|
-      build_string.concat( format.sub(/([^\\]*)\$/, "\\1#{element}") ) # don't replace escaped '\$' but allow us to replace just a lonesome '$'
+      build_string.concat( substitution.sub(/([^\\]*)\$/, "\\1#{element}") ) # don't replace escaped '\$' but allow us to replace just a lonesome '$'
       build_string.gsub!(/\\\$/, '$')
       build_string.concat(' ')
     end
-    
+
     return build_string.strip
   end
 

@@ -9,9 +9,13 @@ yaml_wrapper:
 
 system_wrapper:
 
-cmock_factory:
+cmock_builder:
 
 reportinator:
+
+rake_utils:
+  compose:
+    - rake_wrapper  
 
 file_path_utils:
   compose:
@@ -28,6 +32,23 @@ project_file_loader:
     - system_wrapper
     - file_wrapper
 
+project_config_manager:
+  compose:
+    - cacheinator
+    - yaml_wrapper
+
+cacheinator:
+  compose:
+    - cacheinator_helper
+    - file_path_utils
+    - file_wrapper
+    - yaml_wrapper
+
+cacheinator_helper:
+  compose:
+    - file_wrapper
+    - yaml_wrapper
+
 tool_executor:
   compose:
     - configurator
@@ -42,13 +63,14 @@ tool_executor_helper:
 
 configurator:
   compose:
-    - configurator_helper
+    - configurator_setup
     - configurator_plugins
     - configurator_builder
+    - cmock_builder
     - yaml_wrapper
     - system_wrapper
 
-configurator_helper:
+configurator_setup:
   compose:
     - configurator_builder
     - configurator_validator
@@ -57,6 +79,7 @@ configurator_plugins:
   compose:
     - stream_wrapper
     - file_wrapper
+    - system_wrapper
 
 configurator_validator:
   compose:
@@ -66,13 +89,15 @@ configurator_validator:
 
 configurator_builder:
   compose:
-    - project_file_loader
     - file_system_utils
     - file_wrapper
+    - system_wrapper
 
 loginator:
   compose:
     - configurator
+    - project_file_loader
+    - project_config_manager
     - file_wrapper
     - system_wrapper
 
@@ -86,13 +111,6 @@ streaminator:
 streaminator_helper:
 
 setupinator:
-  compose:
-    - configurator
-    - project_file_loader
-    - test_includes_extractor
-    - plugin_manager
-    - plugin_reportinator
-    - file_finder
 
 plugin_manager:
   compose:
@@ -116,7 +134,6 @@ plugin_reportinator_helper:
     - streaminator
     - yaml_wrapper
     - file_wrapper
-    - rake_wrapper
 
 verbosinator:
   compose: configurator
@@ -125,6 +142,7 @@ file_finder:
   compose:
     - configurator
     - file_finder_helper
+    - cacheinator
     - file_path_utils
     - file_wrapper
     - yaml_wrapper
@@ -134,19 +152,21 @@ file_finder_helper:
 
 test_includes_extractor:
   compose:
+    - configurator
     - yaml_wrapper
     - file_wrapper
 
 task_invoker:
   compose:
-    - configurator
+    - dependinator
+    - rake_utils
     - rake_wrapper
 
 generator:
   compose:
     - configurator
     - preprocessinator
-    - cmock_factory
+    - cmock_builder
     - generator_test_runner
     - generator_test_results
     - test_includes_extractor
@@ -165,25 +185,26 @@ generator_test_results:
 
 generator_test_results_sanity_checker:
   compose:
+    - configurator  
     - streaminator
-
 
 generator_test_runner:
   compose:
     - configurator
+    - file_path_utils
     - file_wrapper
 
 dependinator:
   compose:
     - configurator
+    - project_config_manager
     - test_includes_extractor
-    - file_finder            
     - file_path_utils        
     - rake_wrapper
+    - file_wrapper
 
 preprocessinator:
   compose:
-    - configurator    
     - preprocessinator_helper          
     - preprocessinator_includes_handler
     - preprocessinator_file_handler
@@ -222,12 +243,13 @@ preprocessinator_extractor:
 
 test_invoker:
   compose:
+    - configurator
     - test_invoker_helper
     - streaminator
     - preprocessinator
     - task_invoker
     - dependinator
-    - file_finder
+    - project_config_manager
     - file_path_utils
 
 test_invoker_helper:
@@ -235,6 +257,22 @@ test_invoker_helper:
     - configurator
     - task_invoker
     - dependinator
+    - test_includes_extractor
+    - file_finder
     - file_path_utils
+    - streaminator
     - file_wrapper
-    - rake_wrapper
+
+release_invoker:
+  compose:
+    - release_invoker_helper
+    - configurator
+    - dependinator
+    - task_invoker
+    - file_path_utils
+
+release_invoker_helper:
+  compose:
+    - configurator
+    - dependinator
+    - task_invoker

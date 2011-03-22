@@ -11,10 +11,10 @@ class CMockGeneratorUtils
   def initialize(config, helpers={})
     @config = config
     @ptr_handling = @config.when_ptr
-    @ordered = @config.enforce_strict_ordering
-    @arrays = @config.plugins.include? :array
-    @cexception = @config.plugins.include? :cexception
-    @treat_as = @config.treat_as
+    @ordered      = @config.enforce_strict_ordering
+    @arrays       = @config.plugins.include? :array
+    @cexception   = @config.plugins.include? :cexception
+    @treat_as     = @config.treat_as
 	  @helpers = helpers
     
     if (@arrays)
@@ -29,9 +29,10 @@ class CMockGeneratorUtils
   end
   
   def code_add_base_expectation(func_name, global_ordering_supported=true)
-    lines =  "  CMOCK_#{func_name}_CALL_INSTANCE* cmock_call_instance = (CMOCK_#{func_name}_CALL_INSTANCE*)CMock_Guts_MemNew(sizeof(CMOCK_#{func_name}_CALL_INSTANCE));\n"
+    lines =  "  CMOCK_MEM_INDEX_TYPE cmock_guts_index = CMock_Guts_MemNew(sizeof(CMOCK_#{func_name}_CALL_INSTANCE));\n"
+    lines << "  CMOCK_#{func_name}_CALL_INSTANCE* cmock_call_instance = (CMOCK_#{func_name}_CALL_INSTANCE*)CMock_Guts_GetAddressFor(cmock_guts_index);\n"
     lines << "  UNITY_TEST_ASSERT_NOT_NULL(cmock_call_instance, cmock_line, \"CMock has run out of memory. Please allocate more.\");\n"
-    lines << "  Mock.#{func_name}_CallInstance = (CMOCK_#{func_name}_CALL_INSTANCE*)CMock_Guts_MemChain((void*)Mock.#{func_name}_CallInstance, (void*)cmock_call_instance);\n"
+    lines << "  Mock.#{func_name}_CallInstance = CMock_Guts_MemChain(Mock.#{func_name}_CallInstance, cmock_guts_index);\n"
     lines << "  cmock_call_instance->LineNumber = cmock_line;\n"
     lines << "  cmock_call_instance->CallOrder = ++GlobalExpectCount;\n" if (@ordered and global_ordering_supported)
     lines << "  cmock_call_instance->ExceptionToThrow = CEXCEPTION_NONE;\n" if (@cexception)
@@ -89,8 +90,8 @@ class CMockGeneratorUtils
     c_type     = arg[:type]
     arg_name   = arg[:name]
     expected   = "cmock_call_instance->Expected_#{arg_name}" 
-    unity_func = if ((arg[:ptr?]) and (@ptr_handling == :compare_ptr))
-                   ["UNITY_TEST_ASSERT_EQUAL_HEX32", '']
+    unity_func = if ((arg[:ptr?]) and ((c_type =~ /\*\*/) or (@ptr_handling == :compare_ptr)))
+                   ['UNITY_TEST_ASSERT_EQUAL_PTR', '']
                  else
                    (@helpers.nil? or @helpers[:unity_helper].nil?) ? ["UNITY_TEST_ASSERT_EQUAL",''] : @helpers[:unity_helper].get_helper(c_type)
                  end
@@ -155,7 +156,7 @@ class CMockGeneratorUtils
       when "UNITY_TEST_ASSERT_EQUAL_MEMORY_ARRAY"
         [ "  if (#{pre}#{expected} == NULL)",
           "    { UNITY_TEST_ASSERT_NULL(#{arg_name}, cmock_line, \"Expected NULL. #{unity_msg}\"); }",
-          ((depth_name != 1) ? "  else if (#{depth_name} == 0)\n    { UNITY_TEST_ASSERT_EQUAL_HEX32(#{pre}#{expected}, #{pre}#{arg_name}, cmock_line, \"#{unity_msg}\"); }" : nil),
+          ((depth_name != 1) ? "  else if (#{depth_name} == 0)\n    { UNITY_TEST_ASSERT_EQUAL_PTR(#{pre}#{expected}, #{pre}#{arg_name}, cmock_line, \"#{unity_msg}\"); }" : nil),
           "  else",
           "    { UNITY_TEST_ASSERT_EQUAL_MEMORY_ARRAY((void*)(#{pre}#{expected}), (void*)(#{pre}#{arg_name}), sizeof(#{c_type.sub('*','')}), #{depth_name}, cmock_line, \"#{unity_msg}\"); }\n"].compact.join("\n")
       when /_ARRAY/
@@ -164,7 +165,7 @@ class CMockGeneratorUtils
         else
           [ "  if (#{pre}#{expected} == NULL)",
             "    { UNITY_TEST_ASSERT_NULL(#{pre}#{arg_name}, cmock_line, \"Expected NULL. #{unity_msg}\"); }",
-            ((depth_name != 1) ? "  else if (#{depth_name} == 0)\n    { UNITY_TEST_ASSERT_EQUAL_HEX32(#{pre}#{expected}, #{pre}#{arg_name}, cmock_line, \"#{unity_msg}\"); }" : nil),
+            ((depth_name != 1) ? "  else if (#{depth_name} == 0)\n    { UNITY_TEST_ASSERT_EQUAL_PTR(#{pre}#{expected}, #{pre}#{arg_name}, cmock_line, \"#{unity_msg}\"); }" : nil),
             "  else",
             "    { #{unity_func}(#{pre}#{expected}, #{pre}#{arg_name}, #{depth_name}, cmock_line, \"#{unity_msg}\"); }\n"].compact.join("\n")
         end

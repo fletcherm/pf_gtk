@@ -27,14 +27,22 @@ class FileWrapper
     return Dir.glob(glob)
   end
 
-  def rm_f(filepath)
-    FileUtils.rm_f(filepath)
+  def rm_f(filepath, options={})
+    FileUtils.rm_f(filepath, options)
   end
 
+  def rm_r(filepath, options={})
+    FileUtils.rm_r(filepath, options={})
+  end
+  
   def cp(source, destination, options={})
     FileUtils.cp(source, destination, options)
   end
 
+  def compare(from, to)
+    return FileUtils.compare_file(from, to)
+  end
+  
   def open(filepath, flags)
     File.open(filepath, flags) do |file|
       yield(file)
@@ -43,6 +51,10 @@ class FileWrapper
 
   def read(filepath)
     return File.read(filepath)
+  end
+
+  def touch(filepath, options={})
+    FileUtils.touch(filepath, options)
   end
 
   def write(filepath, contents, flags='w')

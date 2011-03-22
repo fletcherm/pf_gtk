@@ -1,7 +1,7 @@
 require 'plugin'
+require 'file_path_utils'
 require 'constants'
-require 'erb'
-require 'fileutils'
+
 
 class ModuleGenerator < Plugin
 
@@ -18,7 +18,7 @@ class ModuleGenerator < Plugin
       #include "<%=header_file%>"
       <%end%>
       <%end%>
-      #include "<%=@context[:headername]%>"
+      #include "<%=hash[:headername]%>"
       
       void setUp(void)
       {
@@ -28,9 +28,9 @@ class ModuleGenerator < Plugin
       {
       }
       
-      void test_<%=name%>_NeedToImplement(void)
+      void test_<%=hash[:name]%>_NeedToImplement(void)
       {
-      <%="\t"%>TEST_IGNORE();
+          TEST_IGNORE();
       }
       EOS
 
@@ -40,12 +40,12 @@ class ModuleGenerator < Plugin
       #include "<%=header_file%>"
       <%end%>
       <%end%>
-      #include "<%=@context[:headername]%>"
+      #include "<%=hash[:headername]%>"
       EOS
 
     @header_template = (<<-EOS).left_margin
-      #ifndef _<%=@context[:name]%>_H
-      #define _<%=@context[:name]%>_H
+      #ifndef _<%=hash[:name]%>_H
+      #define _<%=hash[:name]%>_H
       
       <%if defined?(MODULE_GENERATOR_HEADER_INCLUDES) && (MODULE_GENERATOR_HEADER_INCLUDES.class == Array) && !MODULE_GENERATOR_HEADER_INCLUDES.empty?%>
       <%MODULE_GENERATOR_HEADER_INCLUDES.each do |header_file|%>
@@ -53,7 +53,7 @@ class ModuleGenerator < Plugin
       <%end%>
       <%end%>
       
-      #endif // _<%=@context[:name]%>_H
+      #endif // _<%=hash[:name]%>_H
       EOS
       
       
@@ -69,33 +69,17 @@ class ModuleGenerator < Plugin
       }
       
       EOS
-      
-    
-    @func_decl_template = (<<-EOS).left_margin
-    
-      <%=@declaration[:returns]%> <%=@declaration[:name]%>(<%=@declaration[:arguments]%>);
-      
-      EOS
-    
-    @func_impl_template = (<<-EOS).left_margin
-    
-      <%=@declaration[:returns]%> <%=@declaration[:name]%>(<%=@declaration[:arguments]%>)
-      {
-          return;
-      }
-      
-      EOS
   end
 
   def create(path, optz={})
   
-    extract_context(path, optz)
+    context = extract_context(path, optz)
 
     if !optz.nil? && (optz[:destroy] == true)
       @ceedling[:streaminator].stdout_puts "Destroying '#{path}'..."
       @files.each do |file|
-        if File.exist?(file[:path])
-          @ceedling[:tool_executor].exec("rm -f \"#{file[:path]}\"")
+        if @ceedling[:file_wrapper].exist?(file[:path])
+          @ceedling[:file_wrapper].rm_f(file[:path])
         else
           @ceedling[:streaminator].stdout_puts "File #{file[:path]} does not exist!"
         end
@@ -105,107 +89,60 @@ class ModuleGenerator < Plugin
 
     @ceedling[:streaminator].stdout_puts "Generating '#{path}'..."
 
-    [File.dirname(@files[0][:path]), File.dirname(@files[1][:path])].each do |dir|
-      makedirs(dir, {:verbose => true})
-    end
-
-    # define_name = headername.gsub(/\.h$/, '_H').upcase
-
     @files[0][:template] = @test_template
     @files[1][:template] = @source_template
     @files[2][:template] = @header_template
 
     @files.each do |file|
-      if File.exist?(file[:path])
+      if @ceedling[:file_wrapper].exist?(file[:path])
         @ceedling[:streaminator].stdout_puts "File #{file[:path]} already exists!"
       else
-        File.open(file[:path], 'w') do |new_file|
-          new_file << ERB.new(file[:template], 0, "<>").result(binding)
+        @ceedling[:file_wrapper].open(file[:path], 'w') do |file_stream|
+          @ceedling[:plugin_reportinator].run_report( file_stream, file[:template], context )
           @ceedling[:streaminator].stdout_puts "File #{file[:path]} created"
         end
       end
     end
 
   end
-  
-  def add_function(path, optz={})
-    extract_context(path, optz)
     
-    parse_function_declaration(optz[:declaration])
-    
-    @files[0][:template] = @func_test_template
-    @files[1][:template] = @func_impl_template
-    @files[2][:template] = @func_decl_template
-
-    @files.each do |file|
-      if File.exist?(file[:path])
-        puts "Appending content to " + file[:path] + "..."
-        File.open(file[:path], 'a+') do |cur_file|
-          cur_file << ERB.new(file[:template], 0, "<>").result(binding)
-        end
-      else
-        raise "Error: #{file[:path]} could not be opened!"
-      end
-    end
-    
-    @ceedling[:streaminator].stdout_puts "Done generating new function goods!"
-  end
-  
   private
   
-  def parse_function_declaration(declaration)
-    p declaration
-    tokens = declaration.match(/^\\?\"?\s*([\w\s]+)\s+(\w+)\s*\((.*)\)\s*\"?$/)
-    p tokens
-    @declaration = {
-      :returns => tokens[1],
-      :name => tokens[2],
-      :arguments => tokens[3]
-    }
-    p "-"*10
-    p @declaration
-    p "-"*10
-  end
-  
   def extract_context(path, optz={})
-    if (!defined?(MODULE_GENERATOR_PROJECT_ROOT) ||
+    if (!defined?(PROJECT_ROOT) ||
         !defined?(MODULE_GENERATOR_SOURCE_ROOT) ||
         !defined?(MODULE_GENERATOR_TEST_ROOT))
-      raise "You must have ':module_generator:project_root:', ':module_generator:source_root:' and ':module_generator:test_root:' defined in your Ceedling configuration file"
+      raise "You must have 'PROJECT_ROOT', '[:module_generator][:source_root]' and '[:module_generator][:test_root]' defined in your Ceedling configuration file."
     end
     
-    @context = {}
+    context = {}
 
-    @context[:paths] = {
-      :base => @ceedling[:file_wrapper].get_expanded_path(MODULE_GENERATOR_PROJECT_ROOT).gsub('\\', '/').sub(/^\//, '').sub(/\/$/, ''),
-      :src => MODULE_GENERATOR_SOURCE_ROOT.gsub('\\', '/').sub(/^\//, '').sub(/\/$/, ''),
-      :test => MODULE_GENERATOR_TEST_ROOT.gsub('\\', '/').sub(/^\//, '').sub(/\/$/, '')
+    context[:paths] = {
+      :base => FilePathUtils.standardize( @ceedling[:file_wrapper].get_expanded_path(PROJECT_ROOT) ),
+      :src  => FilePathUtils.standardize( MODULE_GENERATOR_SOURCE_ROOT ),
+      :test => FilePathUtils.standardize( MODULE_GENERATOR_TEST_ROOT )
     }
 
-    location = File.dirname(path.gsub('\\', '/'))
-    location.sub!(/^\/?#{@context[:paths][:base]}\/?/i, '')
-    location.sub!(/^\/?#{@context[:paths][:src]}\/?/i, '')
-    location.sub!(/^\/?#{@context[:paths][:test]}\/?/i, '')
+    location = File.dirname( FilePathUtils.standardize( path ) )
+    location.sub!(/^\/?#{context[:paths][:base]}\/?/i, '')
+    location.sub!(/^\/?#{context[:paths][:src]}\/?/i, '')
+    location.sub!(/^\/?#{context[:paths][:test]}\/?/i, '')
     
-    @context[:location] = location
+    context[:location] = location
 
-    @context[:name] = File.basename(path).sub(/\.[ch]$/, '')
+    context[:name] = File.basename(path).sub(/\.[ch]$/, '')
     
-    # p @context[:name]
-    
-    @context[:testname] = "test_#{@context[:name]}.c"
-    @context[:sourcename] = "#{@context[:name]}.c"
-    @context[:headername] = "#{@context[:name]}.h"
-    
-    # p @context
+    context[:testname] = "test_#{context[:name]}.c"
+    context[:sourcename] = "#{context[:name]}.c"
+    context[:headername] = "#{context[:name]}.h"
 
     @files = [
-      {:path => File.join(MODULE_GENERATOR_PROJECT_ROOT, @context[:paths][:test], location, @context[:testname])},
-      {:path => File.join(MODULE_GENERATOR_PROJECT_ROOT, @context[:paths][:src],  location, @context[:sourcename])},
-      {:path => File.join(MODULE_GENERATOR_PROJECT_ROOT, @context[:paths][:src],  location, @context[:headername])}
+      {:path => File.join(PROJECT_ROOT, context[:paths][:test], location, context[:testname])},
+      {:path => File.join(PROJECT_ROOT, context[:paths][:src],  location, context[:sourcename])},
+      {:path => File.join(PROJECT_ROOT, context[:paths][:src],  location, context[:headername])}
     ]
     
-    # p @files
+    return context
   end
   
 end

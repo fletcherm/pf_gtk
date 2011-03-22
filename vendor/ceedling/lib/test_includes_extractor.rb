@@ -1,13 +1,12 @@
 
 class TestIncludesExtractor
 
-  constructor :yaml_wrapper, :file_wrapper
+  constructor :configurator, :yaml_wrapper, :file_wrapper
 
-  attr_writer :configurator
 
   def setup
     @includes  = {}
-    @mocks     = {}    
+    @mocks     = {}
   end
 
 

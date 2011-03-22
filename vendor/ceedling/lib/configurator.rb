@@ -6,10 +6,17 @@ require 'deep_merge'
 
 
 class Configurator
+
+  attr_reader :project_config_hash, :environment, :script_plugins, :rake_plugins
+  attr_accessor :project_logging, :project_debug, :project_verbosity, :sanity_checks
   
-  attr_reader :project_config_hash, :cmock_config_hash, :environment, :script_plugins, :rake_plugins
+  constructor(:configurator_setup, :configurator_builder, :configurator_plugins, :cmock_builder, :yaml_wrapper, :system_wrapper) do
+    @project_logging   = false
+    @project_debug     = false
+    @project_verbosity = Verbosity::NORMAL
+    @sanity_checks     = TestResultsSanityChecks::NORMAL
+  end
   
-  constructor :configurator_helper, :configurator_builder, :configurator_plugins, :yaml_wrapper, :system_wrapper
   
   def setup
     # special copy of cmock config to provide to cmock for construction
@@ -24,12 +31,13 @@ class Configurator
     @project_config_hash_backup = {}
     
     @script_plugins = []
+    @rake_plugins   = []
   end
 
   
   def replace_flattened_config(config)
     @project_config_hash.merge!(config)
-    @configurator_helper.build_constants_and_accessors(@project_config_hash, binding())
+    @configurator_setup.build_constants_and_accessors(@project_config_hash, binding())
   end
 
   
@@ -40,20 +48,54 @@ class Configurator
   
   def restore_config
     @project_config_hash = @project_config_hash_backup
-    @configurator_helper.build_constants_and_accessors(@project_config_hash, binding())
+    @configurator_setup.build_constants_and_accessors(@project_config_hash, binding())
+  end
+
+
+  def reset_defaults(config)
+    [:test_compiler,
+     :test_linker,
+     :test_fixture,
+     :test_includes_preprocessor,
+     :test_file_preprocessor,
+     :test_dependencies_generator,
+     :release_compiler,
+     :release_assembler,
+     :release_linker,
+     :release_dependencies_generator].each do |tool|
+      config[:tools].delete(tool) if (not (config[:tools][tool].nil?))
+    end
   end
 
 
   def populate_defaults(config)
     new_config = DEFAULT_CEEDLING_CONFIG.clone
-
-    @configurator_builder.populate_default_test_tools(config, new_config)
-    @configurator_builder.populate_default_test_helper_tools(config, new_config)
-    @configurator_builder.populate_default_release_tools(config, new_config)
- 
     new_config.deep_merge!(config)
-
     config.replace(new_config)
+
+    @configurator_builder.populate_defaults( config, DEFAULT_TOOLS_TEST )
+    @configurator_builder.populate_defaults( config, DEFAULT_TOOLS_TEST_PREPROCESSORS ) if (config[:project][:use_test_preprocessor])
+    @configurator_builder.populate_defaults( config, DEFAULT_TOOLS_TEST_DEPENDENCIES ) if (config[:project][:use_auxiliary_dependencies])
+    
+    @configurator_builder.populate_defaults( config, DEFAULT_TOOLS_RELEASE )              if (config[:project][:release_build])
+    @configurator_builder.populate_defaults( config, DEFAULT_TOOLS_RELEASE_ASSEMBLER )    if (config[:project][:release_build] and config[:release_build][:use_assembly])
+    @configurator_builder.populate_defaults( config, DEFAULT_TOOLS_RELEASE_DEPENDENCIES ) if (config[:project][:release_build] and config[:project][:use_auxiliary_dependencies])
+  end
+  
+
+  def populate_unity_defines(config)
+    run_test = true
+  
+    config[:unity][:defines].each do |define|
+      if (define =~ /RUN_TEST\s*\(.+\)\s*=/)
+        run_test = false
+        break
+      end
+    end
+  
+    if (run_test)
+      config[:unity][:defines] << "\"RUN_TEST(func, line_num)=TestRun(func, #func, line_num)\""
+    end
   end
   
   
@@ -61,17 +103,21 @@ class Configurator
     # cmock has its own internal defaults handling, but we need to set these specific values
     # so they're present for the build environment to access;
     # note: these need to end up in the hash given to initialize cmock for this to be successful
-    cmock = {}    
-    cmock = config[:cmock] if not config[:cmock].nil?
+    cmock = config[:cmock]
 
-    cmock[:mock_prefix] = 'Mock'                                                            if (cmock[:mock_prefix].nil?)
+    # yes, we're duplicating the default mock_prefix in cmock, but it's because we need CMOCK_MOCK_PREFIX always available in Ceedling's environment
+    cmock[:mock_prefix] = 'Mock' if (cmock[:mock_prefix].nil?)
+    
+    # just because strict ordering is the way to go
     cmock[:enforce_strict_ordering] = true                                                  if (cmock[:enforce_strict_ordering].nil?)
+    
     cmock[:mock_path] = File.join(config[:project][:build_root], TESTS_BASE_PATH, 'mocks')  if (cmock[:mock_path].nil?)
-    cmock[:verbosity] = config[:project][:verbosity]                                        if (cmock[:verbosity].nil?)
+    cmock[:verbosity] = @project_verbosity                                                  if (cmock[:verbosity].nil?)
 
     cmock[:plugins] = []                             if (cmock[:plugins].nil?)
     cmock[:plugins].map! { |plugin| plugin.to_sym }
     cmock[:plugins] << (:cexception)                 if (!cmock[:plugins].include?(:cexception) and (config[:project][:use_exceptions]))
+    cmock[:plugins].uniq!
 
     cmock[:unity_helper] = false                     if (cmock[:unity_helper].nil?)
     
@@ -79,10 +125,8 @@ class Configurator
       cmock[:includes] << File.basename(cmock[:unity_helper])
       cmock[:includes].uniq!
     end
-    
-    config[:cmock] = cmock if config[:cmock].nil?
 
-    @cmock_config_hash = config[:cmock].clone
+    @cmock_builder.manufacture(cmock)
   end
 
 
@@ -101,14 +145,25 @@ class Configurator
   
 
   def find_and_merge_plugins(config)
-    @system_wrapper.add_load_path(config[:plugins][:auxiliary_load_path]) if (not config[:plugins][:auxiliary_load_path].nil?)
+    # plugins must be loaded before generic path evaluation & magic that happen later: perform path magic here as discrete step
+    config[:plugins][:load_paths].each do |path|
+      path.replace(@system_wrapper.module_eval(path)) if (path =~ RUBY_STRING_REPLACEMENT_PATTERN)
+      FilePathUtils::standardize(path)
+    end
+    
+    @configurator_plugins.add_load_paths(config)
   
     @rake_plugins   = @configurator_plugins.find_rake_plugins(config)
     @script_plugins = @configurator_plugins.find_script_plugins(config)
     config_plugins  = @configurator_plugins.find_config_plugins(config)
+    plugin_defaults = @configurator_plugins.find_plugin_defaults(config)
     
     config_plugins.each do |plugin|
       config.deep_merge( @yaml_wrapper.load(plugin) )
+    end
+    
+    plugin_defaults.each do |defaults|
+      @configurator_builder.populate_defaults( config, @yaml_wrapper.load(defaults) )
     end
     
     # special plugin setting for results printing
@@ -121,7 +176,7 @@ class Configurator
       key = hash.keys[0]
       value_string = hash[key].to_s
       if (value_string =~ RUBY_STRING_REPLACEMENT_PATTERN)
-        value_string.replace(@system_wrapper.eval(value_string))
+        value_string.replace(@system_wrapper.module_eval(value_string))
       end
       @system_wrapper.env_set(key.to_s.upcase, value_string)
     end    
@@ -129,39 +184,29 @@ class Configurator
 
   
   def eval_paths(config)
+    # [:plugins]:load_paths] already handled
     individual_paths = [
       config[:project][:build_root],
-      config[:project][:options_path],
-      config[:plugins][:base_path],
-      config[:plugins][:auxiliary_load_path]]
+      config[:project][:options_paths]]
       
-    # these are intended to be only single paths but we don't validate that until later
-    # hence, we'll complain about them having multiple entries later
-    # for now, just eval them
-    individual_paths.each do |individual|
-      individual.each { |path| path.replace(@system_wrapper.eval(path)) if (path =~ RUBY_STRING_REPLACEMENT_PATTERN) }
+    individual_paths.flatten.each do |path|
+      path.replace(@system_wrapper.module_eval(path)) if (path =~ RUBY_STRING_REPLACEMENT_PATTERN)
     end
   
     config[:paths].each_pair do |key, list|
-      list.each { |path_entry| path_entry.replace(@system_wrapper.eval(path_entry)) if (path_entry =~ RUBY_STRING_REPLACEMENT_PATTERN) }
+      list.each { |path_entry| path_entry.replace(@system_wrapper.module_eval(path_entry)) if (path_entry =~ RUBY_STRING_REPLACEMENT_PATTERN) }
     end    
   end
   
   
   def standardize_paths(config)
+    # [:plugins]:load_paths] already handled
     individual_paths = [
       config[:project][:build_root],
-      config[:project][:options_path],
-      config[:plugins][:base_path],
-      config[:plugins][:auxiliary_load_path],
+      config[:project][:options_paths],
       config[:cmock][:mock_path]] # cmock path in case it was explicitly set in config
 
-    # these are intended to be only single paths but we don't validate that until later
-    # hence, we'll complain about them having multiple entries later
-    # for now, just standardize them
-    individual_paths.each do |individual|
-      individual.each{|path| FilePathUtils::standardize(path)}
-    end
+    individual_paths.flatten.each { |path| FilePathUtils::standardize(path) }
 
     config[:paths].each_pair do |key, list|
       list.each{|path| FilePathUtils::standardize(path)}
@@ -177,27 +222,26 @@ class Configurator
 
   def validate(config)
     # collect felonies and go straight to jail
-    raise if (not @configurator_helper.validate_required_sections(config))
+    raise if (not @configurator_setup.validate_required_sections(config))
     
     # collect all misdemeanors, everybody on probation
     blotter = []
-    blotter << @configurator_helper.validate_required_section_values(config)
-    blotter << @configurator_helper.validate_paths(config)
-    blotter << @configurator_helper.validate_tools(config)
-    blotter << @configurator_helper.validate_plugins(config)
+    blotter << @configurator_setup.validate_required_section_values(config)
+    blotter << @configurator_setup.validate_paths(config)
+    blotter << @configurator_setup.validate_tools(config)
     
     raise if (blotter.include?(false))
   end
     
   
   def build(config)
-    built_config = @configurator_helper.build_project_config(config)
+    built_config = @configurator_setup.build_project_config(config)
     
     @source_config_hash   = config.clone
     @project_config_hash  = built_config.clone
     store_config()
 
-    @configurator_helper.build_constants_and_accessors(built_config, binding())
+    @configurator_setup.build_constants_and_accessors(built_config, binding())
   end
     
   

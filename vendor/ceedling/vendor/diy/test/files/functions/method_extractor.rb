@@ -1,3 +1,0 @@
-class MethodExtractor
-  
-end

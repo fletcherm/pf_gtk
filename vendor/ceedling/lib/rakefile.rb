@@ -1,23 +1,16 @@
 require 'fileutils'
 
-# 1. get directory containing this here file, back up one directory, and expand to full path
-# 2. lop off current working directory from the root of Ceedling
-# (the root of the file system, particularly with Windows, can show up in unexpected places and cause trouble)
-ceedling_root           = File.expand_path(File.dirname(__FILE__) + '/..')
-ceedling_root_truncated = ceedling_root.sub(/#{Regexp.escape(FileUtils.getwd)}/i, '')
-ceedling_root_truncated = ceedling_root_truncated[1..-1] if (ceedling_root_truncated[0..0] == '/') if (ceedling_root != ceedling_root_truncated)
-
-# add trailing '/' as long as adding that '/' doesn't equal root of file system
-CEEDLING_ROOT    = ceedling_root_truncated + (ceedling_root_truncated.empty? ? '' : '/')
-CEEDLING_LIB     = CEEDLING_ROOT + 'lib/'
-CEEDLING_VENDOR  = CEEDLING_ROOT + 'vendor/'
-CEEDLING_RELEASE = CEEDLING_ROOT + 'release/'
+# get directory containing this here file, back up one directory, and expand to full path
+CEEDLING_ROOT    = File.expand_path(File.dirname(__FILE__) + '/..')
+CEEDLING_LIB     = File.join(CEEDLING_ROOT, 'lib')
+CEEDLING_VENDOR  = File.join(CEEDLING_ROOT, 'vendor')
+CEEDLING_RELEASE = File.join(CEEDLING_ROOT, 'release')
 
 $LOAD_PATH.unshift( CEEDLING_LIB )
-$LOAD_PATH.unshift( CEEDLING_VENDOR + 'diy/lib' )
-$LOAD_PATH.unshift( CEEDLING_VENDOR + 'constructor/lib' )
-$LOAD_PATH.unshift( CEEDLING_VENDOR + 'cmock/lib' )
-$LOAD_PATH.unshift( CEEDLING_VENDOR + 'deep_merge/lib' )
+$LOAD_PATH.unshift( File.join(CEEDLING_VENDOR, 'diy/lib') )
+$LOAD_PATH.unshift( File.join(CEEDLING_VENDOR, 'constructor/lib') )
+$LOAD_PATH.unshift( File.join(CEEDLING_VENDOR, 'cmock/lib') )
+$LOAD_PATH.unshift( File.join(CEEDLING_VENDOR, 'deep_merge/lib') )
 
 require 'rake'
 
@@ -28,40 +21,40 @@ require 'constants'
 
 
 # construct all our objects
-@ceedling = DIY::Context.from_yaml( File.read(CEEDLING_LIB + 'objects.yml') )
+@ceedling = DIY::Context.from_yaml( File.read( File.join(CEEDLING_LIB, 'objects.yml') ) )
 @ceedling.build_everything
 
-# one-stop shopping for all our setup and whatnot post construction
-@ceedling[:setupinator].do_setup(@ceedling, @ceedling[:setupinator].load_project_files)
+# one-stop shopping for all our setup and such after construction
+@ceedling[:setupinator].ceedling = @ceedling
+@ceedling[:setupinator].do_setup( @ceedling[:setupinator].load_project_files )
 
-# set as global constant our discovered project file so it's available for use
-# (we don't use it but maybe custom extensions will need it somehow)
-CEEDLING_MAIN_PROJECT_FILE = @ceedling[:project_file_loader].main_project_filepath
-
-# control Rake's verbosity
-if (not @ceedling[:verbosinator].should_output?(Verbosity::OBNOXIOUS))
-  verbose(false) # verbose defaults to true when rake loads
-end
-
-
+# tell all our plugins we're about to do something
 @ceedling[:plugin_manager].pre_build
 
-
 # load rakefile component files (*.rake)
-PROJECT_RAKEFILE_COMPONENT_FILES.each do |component|
-  load(component)
-end
+PROJECT_RAKEFILE_COMPONENT_FILES.each { |component| load(component) }
+
+# tell rake to shut up by default (overridden in verbosity / debug tasks as appropriate)
+verbose(false)
 
 
-# end block executed following each rake run
+# end block always executed following rake run
 END {
-	# only run plugin if we got to it without runtime exceptions or errors
+  # cache our input configurations to use in comparison upon next execution
+  @ceedling[:cacheinator].cache_test_config( @ceedling[:setupinator].config_hash )    if (@ceedling[:task_invoker].test_invoked?)
+  @ceedling[:cacheinator].cache_release_config( @ceedling[:setupinator].config_hash ) if (@ceedling[:task_invoker].release_invoked?)
+
+  # delete all temp files unless we're in debug mode
+  if (not @ceedling[:configurator].project_debug)
+    @ceedling[:file_wrapper].rm_f( @ceedling[:file_wrapper].directory_listing( File.join(@ceedling[:configurator].project_temp_path, '*') ))
+  end
+
+	# only perform these final steps if we got here without runtime exceptions or errors
 	if (@ceedling[:system_wrapper].ruby_success)
+
+    # tell all our plugins the build is done and process results
 	  @ceedling[:plugin_manager].post_build
-	  
-	  if (@ceedling[:plugin_manager].build_failed?)
-	    @ceedling[:plugin_manager].print_build_failures
-	    exit(1)
-	  end
+	  @ceedling[:plugin_manager].print_plugin_failures
+	  exit(1) if (@ceedling[:plugin_manager].plugins_failed?)
 	end
 }

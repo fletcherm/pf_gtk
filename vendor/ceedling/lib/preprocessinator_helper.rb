@@ -16,14 +16,14 @@ class PreprocessinatorHelper
   end
 
   def assemble_mocks_list(test)
-    return @file_path_utils.form_mocks_filelist( @test_includes_extractor.lookup_raw_mock_list(test) )
+    return @file_path_utils.form_mocks_source_filelist( @test_includes_extractor.lookup_raw_mock_list(test) )
   end
 
   def preprocess_mockable_headers(mock_list, preprocess_file_proc)
     if (@configurator.project_use_test_preprocessor)
       preprocess_files_smartly(
         @file_path_utils.form_preprocessed_mockable_headers_filelist(mock_list),
-        preprocess_file_proc) { |file| @file_finder.find_mockable_header(file) }
+        preprocess_file_proc ) { |file| @file_finder.find_header_file(file) }
     end
   end
 
@@ -37,7 +37,7 @@ class PreprocessinatorHelper
 
   def preprocess_files_smartly(file_list, preprocess_file_proc)
     if (@configurator.project_use_auxiliary_dependencies)
-      @task_invoker.invoke_preprocessed_files(file_list)
+      @task_invoker.invoke_test_preprocessed_files(file_list)
     else
       file_list.each { |file| preprocess_file_proc.call( yield(file) ) }
     end

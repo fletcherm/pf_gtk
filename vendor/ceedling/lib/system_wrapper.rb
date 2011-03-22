@@ -12,8 +12,12 @@ class SystemWrapper
     return SystemWrapper.is_windows?
   end
   
-  def eval(string)
+  def module_eval(string)
     return Object.module_eval("\"" + string + "\"")
+  end
+
+  def eval(string)
+    return eval(string)
   end
 
   def search_paths
@@ -55,4 +59,9 @@ class SystemWrapper
     return ($!.nil? || $!.is_a?(SystemExit) && $!.success?)
   end
 
+  def constants_include?(item)
+    # forcing to strings provides consistency across Ruby versions
+    return Object.constants.map{|constant| constant.to_s}.include?(item.to_s)
+  end
+  
 end

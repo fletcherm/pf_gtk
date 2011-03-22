@@ -24,6 +24,7 @@ class CMockUnityHelperParser
       lookup = lookup + '*'
       return [@c_types[lookup], '&'] if (@c_types[lookup])
     end
+    return ['UNITY_TEST_ASSERT_EQUAL_PTR', ''] if (ctype =~ /cmock_\w+_ptr\d+/)
     raise("Don't know how to test #{ctype} and memory tests are disabled!") unless @config.memcmp_if_unknown
     return (lookup =~ /\*$/) ? [@fallback, '&'] : [@fallback, '']
   end
@@ -33,8 +34,12 @@ class CMockUnityHelperParser
   def map_C_types
     c_types = {}
     @config.treat_as.each_pair do |ctype, expecttype|
-      c_types[ctype.gsub(/\s+/,'_')] = "UNITY_TEST_ASSERT_EQUAL_#{expecttype}"
-      c_types[ctype.gsub(/\s+/,'_')+'*'] = "UNITY_TEST_ASSERT_EQUAL_#{expecttype}_ARRAY"
+      if (expecttype =~ /\*/)
+        c_types[ctype.gsub(/\s+/,'_')] = "UNITY_TEST_ASSERT_EQUAL_#{expecttype.gsub(/\*/,'')}_ARRAY"
+      else
+        c_types[ctype.gsub(/\s+/,'_')] = "UNITY_TEST_ASSERT_EQUAL_#{expecttype}"
+        c_types[ctype.gsub(/\s+/,'_')+'*'] = "UNITY_TEST_ASSERT_EQUAL_#{expecttype}_ARRAY"
+      end
     end
     c_types
   end

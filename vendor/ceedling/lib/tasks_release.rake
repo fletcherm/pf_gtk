@@ -1,30 +1,22 @@
+require 'constants'
+require 'file_path_utils'
 
-release_build_components =
-    (COLLECTION_ALL_SOURCE.pathmap("#{PROJECT_RELEASE_BUILD_OUTPUT_C_PATH}/%n#{EXTENSION_OBJECT}") + 
-     COLLECTION_ALL_ASSEMBLY.pathmap("#{PROJECT_RELEASE_BUILD_OUTPUT_ASM_PATH}/%n#{EXTENSION_OBJECT}"))
-
-release_build_components << @ceedling[:file_path_utils].form_release_c_object_filepath('CException.c') if (PROJECT_USE_EXCEPTIONS)
-
-
-file PROJECT_RELEASE_BUILD_TARGET => release_build_components
 
 desc "Build release target."
-task :release => [:directories, PROJECT_RELEASE_BUILD_TARGET]
-
-namespace :compile do
-  COLLECTION_ALL_SOURCE.each do |source|
-    # by source file name
-    object = @ceedling[:file_path_utils].form_release_c_object_filepath(source)
-    name   = File.basename(source)
-    task name.to_sym => [:directories, object]
-  end
+task RELEASE_CONTEXT => [:directories] do
+  header = "Release build '#{File.basename(PROJECT_RELEASE_BUILD_TARGET)}'"
+  @ceedling[:streaminator].stdout_puts("\n\n#{header}\n#{'-' * header.length}")  
+  
+  core_objects  = []
+  extra_objects = @ceedling[:file_path_utils].form_release_build_c_objects_filelist( COLLECTION_RELEASE_ARTIFACT_EXTRA_LINK_OBJECTS )
+  
+  @ceedling[:project_config_manager].process_release_config_change
+  core_objects.concat( @ceedling[:release_invoker].setup_and_invoke_c_objects( COLLECTION_ALL_SOURCE ) )
+  
+  # if assembler use isn't enabled, COLLECTION_ALL_ASSEMBLY is empty array & nothing happens
+  core_objects.concat( @ceedling[:release_invoker].setup_and_invoke_asm_objects( COLLECTION_ALL_ASSEMBLY ) )
+  
+  file( PROJECT_RELEASE_BUILD_TARGET => (core_objects + extra_objects) )
+  Rake::Task[PROJECT_RELEASE_BUILD_TARGET].invoke
 end
 
-namespace :assemble do
-  COLLECTION_ALL_ASSEMBLY.each do |source|
-    # by source file name
-    object = @ceedling[:file_path_utils].form_release_asm_object_filepath(source)
-    name   = File.basename(source)
-    task name.to_sym => [:directories, object]
-  end
-end

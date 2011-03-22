@@ -12,7 +12,7 @@ class CMockConfig
     :mock_path                => 'mocks',
     :mock_prefix              => 'Mock',
     :plugins                  => [],
-    :includes                 => [],
+    :strippables              => ['(?:__attribute__\s*\(+.*?\)+)'],
     :attributes               => ['__ramfunc', '__irq', '__fiq', 'register', 'extern'],
     :enforce_strict_ordering  => false,
     :unity_helper             => false,
@@ -26,6 +26,11 @@ class CMockConfig
     :ignore                   => :args_and_calls, #the options being :args_and_calls or :args_only
     :callback_include_count   => true,
     :callback_after_arg_check => false,
+    :includes                    => nil, 
+    :includes_h_pre_orig_header  => nil, 
+    :includes_h_post_orig_header => nil, 
+    :includes_c_pre_header       => nil, 
+    :includes_c_post_header      => nil, 
   }
   
   def initialize(options=nil)
@@ -37,8 +42,14 @@ class CMockConfig
     end
     
     #do some quick type verification
-    [:plugins, :includes, :attributes, :treat_as_void].each do |opt|
+    [:plugins, :attributes, :treat_as_void].each do |opt|
       unless (options[opt].class == Array)
+        options[opt] = []
+        puts "WARNING: :#{opt.to_s} should be an array." unless (options[:verbosity] < 1)
+      end
+    end
+    [:includes, :includes_h_pre_orig_header, :includes_h_post_orig_header, :includes_c_pre_header, :includes_c_post_header].each do |opt|
+      unless (options[opt].nil? or (options[opt].class == Array))
         options[opt] = []
         puts "WARNING: :#{opt.to_s} should be an array." unless (options[:verbosity] < 1)
       end
@@ -90,7 +101,7 @@ class CMockConfig
       'uint32_t'        => 'HEX32',
       'UINT32'          => 'HEX32',
       'UINT32_T'        => 'HEX32',
-      'void*'           => 'HEX32',
+      'void*'           => 'PTR',
       'unsigned short'  => 'HEX16',
       'uint16'          => 'HEX16',
       'uint16_t'        => 'HEX16',

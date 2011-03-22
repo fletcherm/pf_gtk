@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'rake'
-require 'rake/loaders/makefile'
+require 'makefile' # our replacement for rake's make-style dependency loader
 
 class Rake::Task
   attr_reader :already_invoked
@@ -9,7 +9,7 @@ end
 class RakeWrapper
 
   def initialize
-    @makefile_loader = Rake::MakefileLoader.new
+    @makefile_loader = Rake::MakefileLoader.new # use our custom replacement noted above
   end
 
   def [](task)

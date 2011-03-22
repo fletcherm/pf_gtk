@@ -1,5 +1,0 @@
-thing_builder:
-  
-method build_thing:
-    object: thing_builder
-    method: no_exist

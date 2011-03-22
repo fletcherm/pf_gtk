@@ -1,2 +1,0 @@
-class Road
-end

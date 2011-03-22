@@ -12,11 +12,9 @@ class PluginManager
   
   def load_plugin_scripts(script_plugins, system_objects)
     script_plugins.each do |plugin|
+      # protect against instantiating object multiple times due to processing config multiple times (options, etc)
 			next if (@plugin_manager_helper.include?(@plugin_objects, plugin))
-			# build up load path in case there are ruby files in plugin directory that main ruby file wants to load
-      @system_wrapper.add_load_path( File.join(@configurator.plugins_base_path, plugin ) )
-      @system_wrapper.require_file( File.join(@configurator.plugins_base_path, plugin, "#{plugin}.rb") )
-      
+      @system_wrapper.require_file( "#{plugin}.rb" )
       object = @plugin_manager_helper.instantiate_plugin_script( camelize(plugin), system_objects, plugin )
       @plugin_objects << object
       
@@ -25,11 +23,11 @@ class PluginManager
     end
   end
   
-  def build_failed?
+  def plugins_failed?
     return (@build_fail_registry.size > 0)
   end
   
-  def print_build_failures
+  def print_plugin_failures
     if (@build_fail_registry.size > 0)
       report = @reportinator.generate_banner('BUILD FAILURE SUMMARY')
       
@@ -44,7 +42,7 @@ class PluginManager
   end
   
   def register_build_failure(message)
-    @build_fail_registry << message  if not message.empty?
+    @build_fail_registry << message if (message and not message.empty?)
   end
 
   #### execute all plugin methods ####
@@ -66,11 +64,13 @@ class PluginManager
   def pre_test_execute(arg_hash); execute_plugins(:pre_test_execute, arg_hash); end
   def post_test_execute(arg_hash)
     # special arbitration: raw test results are printed or taken over by plugins handling the job
-    @streaminator.stdout_puts(arg_hash[:tool_output]) if (@configurator.plugins_display_raw_test_results)
+    @streaminator.stdout_puts(arg_hash[:shell_result][:output]) if (@configurator.plugins_display_raw_test_results)
     execute_plugins(:post_test_execute, arg_hash)
   end
   
   def post_build; execute_plugins(:post_build); end
+  
+  def summary; execute_plugins(:summary); end
   
   private ####################################
   

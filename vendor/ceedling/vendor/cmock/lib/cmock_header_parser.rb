@@ -10,14 +10,16 @@ class CMockHeaderParser
   
   def initialize(cfg)
     @funcs = []
+    @c_strippables = cfg.strippables
     @c_attributes = (['const'] + cfg.attributes).uniq
     @treat_as_void = (['void'] + cfg.treat_as_void).uniq
-    @declaration_parse_matcher = /([\d\w\s\*\(\),\[\]]+??)\(([\d\w\s\*\(\),\.\[\]]*)\)$/m
+    @declaration_parse_matcher = /([\d\w\s\*\(\),\[\]]+??)\(([\d\w\s\*\(\),\.\[\]+-]*)\)$/m
     @standards = (['int','short','char','long','unsigned','signed'] + cfg.treat_as.keys).uniq
     @when_no_prototypes = cfg.when_no_prototypes
     @local_as_void = @treat_as_void
     @verbosity = cfg.verbosity
     @treat_externs = cfg.treat_externs
+    @c_strippables += ['extern'] if (@treat_externs == :include) #we'll need to remove the attribute if we're allowing externs
   end
   
   def parse(name, source)
@@ -40,7 +42,7 @@ class CMockHeaderParser
     }
   end
   
-  private unless $ThisIsOnlyATest ################
+  private if $ThisIsOnlyATest.nil? ################
   
   def import_source(source)
 
@@ -69,11 +71,12 @@ class CMockHeaderParser
     
     # enums, unions, structs, and typedefs can all contain things (e.g. function pointers) that parse like function prototypes, so yank them
     # forward declared structs are removed before struct definitions so they don't mess up real thing later. we leave structs keywords in function prototypes
-    source.gsub!(/^[\w\s]*struct[^;\{\}\(\)]+;/m, '')                         # remove forward declared structs
-    source.gsub!(/^[\w\s]*(enum|union|struct)[\w\s]*\{[^\}]+\}[\w\s]*;/m, '') # remove struct definitions
-    source.gsub!(/(\W)(register|auto|static|restrict)(\W)/, '\1\3')           # remove problem keywords
-    source.gsub!(/\s*=\s*['"a-zA-Z0-9_\.]+\s*/, '')                           # remove default value statements from argument lists
-    source.gsub!(/^(?:.*\W)?typedef\W.*/, '')                                 # remove typedef statements
+    source.gsub!(/^[\w\s]*struct[^;\{\}\(\)]+;/m, '')                                      # remove forward declared structs
+    source.gsub!(/^[\w\s]*(enum|union|struct|typepdef)[\w\s]*\{[^\}]+\}[\w\s\*\,]*;/m, '') # remove struct, union, and enum definitions and typedefs with braces
+    source.gsub!(/(\W)(?:register|auto|static|restrict)(\W)/, '\1\2')                      # remove problem keywords
+    source.gsub!(/\s*=\s*['"a-zA-Z0-9_\.]+\s*/, '')                                        # remove default value statements from argument lists
+    source.gsub!(/^(?:[\w\s]*\W)?typedef\W.*/, '')                                         # remove typedef statements
+    source.gsub!(/(^|\W+)(?:#{@c_strippables.join('|')})(?=$|\W+)/,'\1') unless @c_strippables.empty? # remove known attributes slated to be stripped
     
     #scan for functions which return function pointers, because they are a pain
     source.gsub!(/([\w\s\*]+)\(*\(\s*\*([\w\s\*]+)\s*\(([\w\s\*,]*)\)\)\s*\(([\w\s\*,]*)\)\)*/) do |m|
@@ -141,9 +144,9 @@ class CMockHeaderParser
       return 'void'
     else
       c=0
-      arg_list.gsub!(/(\w+)(?:\s*\[[\s\d]*\])+/,'*\1')    # magically turn brackets into asterisks
-      arg_list.gsub!(/\s+\*/,'*')                         # remove space to place asterisks with type (where they belong)
-      arg_list.gsub!(/\*(\w)/,'* \1')                     # pull asterisks away from arg to place asterisks with type (where they belong)
+      arg_list.gsub!(/(\w+)(?:\s*\[[\s\d\w+-]*\])+/,'*\1')  # magically turn brackets into asterisks
+      arg_list.gsub!(/\s+\*/,'*')                           # remove space to place asterisks with type (where they belong)
+      arg_list.gsub!(/\*(\w)/,'* \1')                       # pull asterisks away from arg to place asterisks with type (where they belong)
       
       #scan argument list for function pointers and replace them with custom types
       arg_list.gsub!(/([\w\s]+)\(*\(\s*\*([\w\s\*]+)\)\s*\(([\w\s\*,]*)\)\)*/) do |m|
@@ -164,7 +167,7 @@ class CMockHeaderParser
       #automatically name unnamed arguments (those that only had a type)
       arg_list.split(/\s*,\s*/).map { |arg| 
         parts = (arg.split - ['struct', 'union', 'enum', 'const', 'const*'])
-        if ((parts.size < 2) or (parts[-1][-1] == 42) or (@standards.include?(parts[-1])))
+        if ((parts.size < 2) or (parts[-1][-1].chr == '*') or (@standards.include?(parts[-1])))
           "#{arg} cmock_arg#{c+=1}" 
         else
           arg
@@ -213,7 +216,6 @@ class CMockHeaderParser
                     }
         
     #remove default argument statements from mock definitions
-    args.gsub!(/=\s*[a-zA-Z0-9_\.]+\s*\,/, ',')
     args.gsub!(/=\s*[a-zA-Z0-9_\.]+\s*/, ' ')
     
     #check for var args
