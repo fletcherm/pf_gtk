@@ -1,7 +1,10 @@
 #include <gtk/gtk.h>
 #include "ApplicationView.h"
+#include "types.h"
 
-static void(*whenCalculateClicked)(void) = 0;
+typedef void(*eventWithText)(gchar*);
+
+static simpleEvent whenCalculateClicked = 0;
 static void calculateClicked(GtkWidget *widget, gpointer data) {
   whenCalculateClicked();
 }
@@ -9,7 +12,7 @@ void ApplicationView_WhenCalculateClicked(void(*callback)(void)) {
   whenCalculateClicked = callback;
 }
 
-static void(*whenDivisorChanged)(gchar*) = 0;
+static eventWithText whenDivisorChanged = 0;
 static void divisorChanged(GtkWidget *widget, gchar *new_text, gint new_text_length, gint *position, gpointer data) {
   whenDivisorChanged(new_text);
 }
@@ -17,7 +20,7 @@ void ApplicationView_WhenDivisorChanged(void(*callback)(gchar*)) {
   whenDivisorChanged = callback;
 }
 
-static void(*whenDividendChanged)(gchar*) = 0;
+static eventWithText whenDividendChanged = 0;
 static void dividendChanged(GtkWidget *widget, gchar *new_text, gint new_text_length, gint *position, gpointer data) {
   whenDividendChanged(new_text);
 }

@@ -2,7 +2,7 @@
 #include "bstrlib.h"
 #include "ApplicationModel.h"
 
-static void(*applicationStartsEvent)(void) = 0;
+static simpleEvent applicationStartsEvent = 0;
 void ApplicationModel_WhenApplicationStarts(void(*callback)(void)) {
   applicationStartsEvent = callback;
 }
