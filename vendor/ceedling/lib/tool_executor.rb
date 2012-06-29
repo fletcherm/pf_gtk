@@ -1,5 +1,11 @@
 require 'constants'
 
+class ShellExecutionException < RuntimeError
+  attr_reader :shell_result
+  def initialize(shell_result)
+    @shell_result = shell_result
+  end
+end
 
 class ToolExecutor
 
@@ -15,27 +21,55 @@ class ToolExecutor
     @tool_name  = tool_config[:name]
     @executable = tool_config[:executable]
 
+    command = {}
+
     # basic premise is to iterate top to bottom through arguments using '$' as 
     #  a string replacement indicator to expand globals or inline yaml arrays
     #  into command line arguments via substitution strings
-    return [
+    command[:line] = [
       @tool_executor_helper.osify_path_separators( expandify_element(@executable, *args) ),
       build_arguments(tool_config[:arguments], *args),
-      @tool_executor_helper.stderr_redirect_addendum(tool_config) ].compact.join(' ')
+      ].join(' ').strip
+
+    command[:options] = {
+      :stderr_redirect => @tool_executor_helper.stderr_redirection(tool_config, @configurator.project_logging),
+      :background_exec => tool_config[:background_exec]
+      }
+    
+    return command
   end
 
 
   # shell out, execute command, and return response
-  def exec(command, args=[], options={:boom => true})
-    command_str = "#{command} #{args.join(' ')}".strip
+  def exec(command, options={}, args=[])
+    options[:boom] = true if (options[:boom].nil?)
+    options[:stderr_redirect] = StdErrRedirect::NONE if (options[:stderr_redirect].nil?)
+    options[:background_exec] = BackgroundExec::NONE if (options[:background_exec].nil?)
+
+    # build command line
+    command_line = [
+      @tool_executor_helper.background_exec_cmdline_prepend( options ),
+      command.strip,
+      args,
+      @tool_executor_helper.stderr_redirect_cmdline_append( options ),
+      @tool_executor_helper.background_exec_cmdline_append( options ),
+      ].flatten.compact.join(' ')
+
+    shell_result = {}
     
-    shell_result = @system_wrapper.shell_execute(command_str)
-
-    @tool_executor_helper.print_happy_results(command_str, shell_result)
-    @tool_executor_helper.print_error_results(command_str, shell_result) if (options[:boom])
-
-    raise if ((shell_result[:exit_code] != 0) and options[:boom])
-
+    # depending on background exec option, we shell out differently
+    if (options[:background_exec] != BackgroundExec::NONE)
+      shell_result = @system_wrapper.shell_system( command_line )
+    else
+      shell_result = @system_wrapper.shell_backticks( command_line )
+    end
+    
+    @tool_executor_helper.print_happy_results( command_line, shell_result, options[:boom] )
+    @tool_executor_helper.print_error_results( command_line, shell_result, options[:boom] )
+    
+    # go boom if exit code isn't 0 (but in some cases we don't want a non-0 exit code to raise)
+    raise ShellExecutionException.new(shell_result) if ((shell_result[:exit_code] != 0) and options[:boom])
+    
     return shell_result
   end
 

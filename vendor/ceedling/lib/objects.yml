@@ -1,6 +1,8 @@
 
 file_wrapper:
 
+file_system_wrapper:
+
 stream_wrapper:
 
 rake_wrapper:
@@ -16,6 +18,10 @@ reportinator:
 rake_utils:
   compose:
     - rake_wrapper  
+
+system_utils:
+  compose:
+    - system_wrapper  
 
 file_path_utils:
   compose:
@@ -59,6 +65,7 @@ tool_executor:
 tool_executor_helper:
   compose:
     - streaminator
+    - system_utils
     - system_wrapper
 
 configurator:
@@ -74,6 +81,8 @@ configurator_setup:
   compose:
     - configurator_builder
     - configurator_validator
+    - configurator_plugins
+    - stream_wrapper
 
 configurator_plugins:
   compose:
@@ -111,6 +120,8 @@ streaminator:
 streaminator_helper:
 
 setupinator:
+
+plugin_builder:
 
 plugin_manager:
   compose:
@@ -162,13 +173,19 @@ task_invoker:
     - rake_utils
     - rake_wrapper
 
+flaginator:
+  compose:
+    - configurator
+
 generator:
   compose:
     - configurator
+    - generator_helper
     - preprocessinator
     - cmock_builder
     - generator_test_runner
     - generator_test_results
+    - flaginator
     - test_includes_extractor
     - tool_executor
     - file_finder
@@ -176,6 +193,10 @@ generator:
     - streaminator
     - plugin_manager
     - file_wrapper
+
+generator_helper:
+  compose:
+    - streaminator
 
 generator_test_results:
   compose:
@@ -238,41 +259,49 @@ preprocessinator_file_handler:
     - file_wrapper   
 
 preprocessinator_extractor:
-  compose:
-    - file_wrapper
 
 test_invoker:
   compose:
     - configurator
     - test_invoker_helper
+    - plugin_manager
     - streaminator
     - preprocessinator
     - task_invoker
     - dependinator
     - project_config_manager
+    - build_invoker_utils
     - file_path_utils
+    - file_wrapper
 
 test_invoker_helper:
   compose:
     - configurator
     - task_invoker
-    - dependinator
     - test_includes_extractor
     - file_finder
     - file_path_utils
-    - streaminator
     - file_wrapper
 
 release_invoker:
   compose:
-    - release_invoker_helper
     - configurator
+    - release_invoker_helper
+    - build_invoker_utils
     - dependinator
     - task_invoker
     - file_path_utils
+    - file_wrapper
 
 release_invoker_helper:
   compose:
     - configurator
     - dependinator
     - task_invoker
+
+build_invoker_utils:
+  compose:
+    - configurator
+    - streaminator
+
+erb_wrapper:

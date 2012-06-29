@@ -21,18 +21,24 @@ class Setupinator
     # note: configurator modifies the cmock section of the hash with a couple defaults to tie 
     #       project together - the modified hash is used to build cmock object
     @ceedling[:configurator].populate_defaults( config_hash )
-    @ceedling[:configurator].populate_unity_defines( config_hash )
     @ceedling[:configurator].populate_cmock_defaults( config_hash )
     @ceedling[:configurator].find_and_merge_plugins( config_hash )
-    @ceedling[:configurator].populate_tool_names_and_stderr_redirect( config_hash )
+    @ceedling[:configurator].tools_setup( config_hash )
     @ceedling[:configurator].eval_environment_variables( config_hash )
     @ceedling[:configurator].eval_paths( config_hash )
     @ceedling[:configurator].standardize_paths( config_hash )
     @ceedling[:configurator].validate( config_hash )
-    @ceedling[:configurator].build( config_hash )
-    @ceedling[:configurator].insert_rake_plugins( @ceedling[:configurator].rake_plugins )
+    @ceedling[:configurator].build( config_hash, :environment )
     
-    @ceedling[:plugin_manager].load_plugin_scripts( @ceedling[:configurator].script_plugins, @ceedling )
+    @ceedling[:configurator].insert_rake_plugins( @ceedling[:configurator].rake_plugins )
+    @ceedling[:configurator].tools_supplement_arguments( config_hash )
+    
+    # merge in any environment variables plugins specify, after the main build
+    @ceedling[:plugin_manager].load_plugin_scripts( @ceedling[:configurator].script_plugins, @ceedling ) do |env|
+      @ceedling[:configurator].eval_environment_variables( env )
+      @ceedling[:configurator].build_supplement( config_hash, env )
+    end
+    
     @ceedling[:plugin_reportinator].set_system_objects( @ceedling )
     @ceedling[:file_finder].prepare_search_sources
     @ceedling[:loginator].setup_log_filepath

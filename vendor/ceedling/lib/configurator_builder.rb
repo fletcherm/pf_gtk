@@ -64,7 +64,7 @@ class ConfiguratorBuilder
   def populate_defaults(config, defaults)
     defaults.keys.sort.each do |section|
       defaults[section].keys.sort.each do |entry|
-        config[section][entry] = defaults[section][entry] if (config[section].nil? or config[section][entry].nil?)
+        config[section][entry] = defaults[section][entry].deep_clone if (config[section].nil? or config[section][entry].nil?)
       end
     end
   end
@@ -150,10 +150,12 @@ class ConfiguratorBuilder
 
     out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_cmock.rake') if (in_hash[:project_use_mocks])
     out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_preprocess.rake') if (in_hash[:project_use_test_preprocessor])
-    out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_tests_aux_dependencies.rake') if (in_hash[:project_use_auxiliary_dependencies])
+    out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_tests_deep_dependencies.rake') if (in_hash[:project_use_deep_dependencies])
+    out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'tasks_tests_deep_dependencies.rake') if (in_hash[:project_use_deep_dependencies])
 
-    out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_release_aux_dependencies.rake') if (in_hash[:project_release_build] and in_hash[:project_use_auxiliary_dependencies])
+    out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_release_deep_dependencies.rake') if (in_hash[:project_release_build] and in_hash[:project_use_deep_dependencies])
     out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'rules_release.rake') if (in_hash[:project_release_build])
+    out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'tasks_release_deep_dependencies.rake') if (in_hash[:project_release_build] and in_hash[:project_use_deep_dependencies])
     out_hash[:project_rakefile_component_files] << File.join(CEEDLING_LIB, 'tasks_release.rake') if (in_hash[:project_release_build])
 
     return out_hash
@@ -184,21 +186,16 @@ class ConfiguratorBuilder
     return {} if (not in_hash[:project_release_build])
     
     release_target_file = ((in_hash[:release_build_output].nil?) ? (DEFAULT_RELEASE_TARGET_NAME.ext(in_hash[:extension_executable])) : in_hash[:release_build_output])
+    release_map_file    = ((in_hash[:release_build_output].nil?) ? (DEFAULT_RELEASE_TARGET_NAME.ext(in_hash[:extension_map])) : in_hash[:release_build_output].ext(in_hash[:extension_map]))
     
     return {
       # tempted to make a helper method in file_path_utils? stop right there, pal. you'll introduce a cyclical dependency
-      :project_release_build_target => File.join(in_hash[:project_release_artifacts_path], release_target_file)
+      :project_release_build_target => File.join(in_hash[:project_build_release_root], release_target_file),
+      :project_release_build_map    => File.join(in_hash[:project_build_release_root], release_map_file)
       }
   end
   
 
-  def collect_environment_variables(in_hash)
-    return {
-      :collection_environment => in_hash[:environment]
-      }
-  end
-
-  
   def collect_project_options(in_hash)
     options = []
     
@@ -233,8 +230,8 @@ class ConfiguratorBuilder
   def collect_source_and_include_paths(in_hash)
     return {
       :collection_paths_source_and_include => 
-        in_hash[:collection_paths_source] + 
-        in_hash[:collection_paths_include]
+        ( in_hash[:collection_paths_source] + 
+          in_hash[:collection_paths_include] ).select {|x| File.directory?(x)}
       }    
   end
 
@@ -254,25 +251,24 @@ class ConfiguratorBuilder
   def collect_test_support_source_include_paths(in_hash)
     return {
       :collection_paths_test_support_source_include => 
-        in_hash[:collection_paths_test] +
+        (in_hash[:collection_paths_test] +
         in_hash[:collection_paths_support] +
         in_hash[:collection_paths_source] + 
-        in_hash[:collection_paths_include]
+        in_hash[:collection_paths_include] ).select {|x| File.directory?(x)}
       }    
   end
-  
-  
-  def collect_test_support_source_include_vendor_paths(in_hash)
-    extra_paths = []
-    extra_paths << FilePathUtils::form_ceedling_vendor_path(UNITY_LIB_PATH)
-    extra_paths << FilePathUtils::form_ceedling_vendor_path(CEXCEPTION_LIB_PATH) if (in_hash[:project_use_exceptions])
-    extra_paths << FilePathUtils::form_ceedling_vendor_path(CMOCK_LIB_PATH)       if (in_hash[:project_use_mocks])
-    extra_paths << in_hash[:cmock_mock_path]                                   if (in_hash[:project_use_mocks])
 
+
+  def collect_vendor_paths(in_hash)
+    return {:collection_paths_vendor => get_vendor_paths(in_hash)}
+  end
+  
+
+  def collect_test_support_source_include_vendor_paths(in_hash)
     return {
       :collection_paths_test_support_source_include_vendor => 
         in_hash[:collection_paths_test_support_source_include] +
-        extra_paths
+        get_vendor_paths(in_hash)
       }    
   end
   
@@ -283,6 +279,8 @@ class ConfiguratorBuilder
     in_hash[:collection_paths_test].each do |path|
       all_tests.include( File.join(path, "#{in_hash[:project_test_file_prefix]}*#{in_hash[:extension_source]}") )
     end
+
+    @file_system_utils.revise_file_list( all_tests, in_hash[:files_test] )
 
     return {:collection_all_tests => all_tests}
   end
@@ -297,16 +295,22 @@ class ConfiguratorBuilder
       all_assembly.include( File.join(path, "*#{in_hash[:extension_assembly]}") )
     end
     
+    @file_system_utils.revise_file_list( all_assembly, in_hash[:files_assembly] )
+
     return {:collection_all_assembly => all_assembly}
   end
 
 
   def collect_source(in_hash)
     all_source = @file_wrapper.instantiate_file_list
-    
     in_hash[:collection_paths_source].each do |path|
-      all_source.include( File.join(path, "*#{in_hash[:extension_source]}") )
+      if File.exists?(path) and not File.directory?(path)
+        all_source.include( path )
+      else
+        all_source.include( File.join(path, "*#{in_hash[:extension_source]}") )
+      end
     end
+    @file_system_utils.revise_file_list( all_source, in_hash[:files_source] )
     
     return {:collection_all_source => all_source}
   end
@@ -321,9 +325,11 @@ class ConfiguratorBuilder
       in_hash[:collection_paths_source] + 
       in_hash[:collection_paths_include]
     
-    (paths).each do |path|
+    paths.each do |path|
       all_headers.include( File.join(path, "*#{in_hash[:extension_header]}") )
     end
+
+    @file_system_utils.revise_file_list( all_headers, in_hash[:files_include] )
     
     return {:collection_all_headers => all_headers}
   end
@@ -342,11 +348,21 @@ class ConfiguratorBuilder
     paths << FilePathUtils::form_ceedling_vendor_path(CEXCEPTION_LIB_PATH) if (in_hash[:project_use_exceptions])
     paths << FilePathUtils::form_ceedling_vendor_path(CMOCK_LIB_PATH) if (in_hash[:project_use_mocks])
 
-    (paths).each do |path|
+    paths.each do |path|
       all_input.include( File.join(path, "*#{in_hash[:extension_header]}") )
-      all_input.include( File.join(path, "*#{in_hash[:extension_source]}") )
+      if File.exists?(path) and not File.directory?(path)
+        all_input.include( path )
+      else
+        all_input.include( File.join(path, "*#{in_hash[:extension_source]}") )
+      end
     end
     
+    @file_system_utils.revise_file_list( all_input, in_hash[:files_test] )
+    @file_system_utils.revise_file_list( all_input, in_hash[:files_support] )
+    @file_system_utils.revise_file_list( all_input, in_hash[:files_source] )
+    @file_system_utils.revise_file_list( all_input, in_hash[:files_include] )
+    # finding assembly files handled explicitly through other means
+
     return {:collection_all_existing_compilation_input => all_input}    
   end
 
@@ -376,7 +392,7 @@ class ConfiguratorBuilder
 
     # no build paths here so plugins can remap if necessary (i.e. path mapping happens at runtime)
     objects << CEXCEPTION_C_FILE.ext( in_hash[:extension_object] ) if (in_hash[:project_use_exceptions])
-    
+
     return {:collection_release_artifact_extra_link_objects => objects}
   end
   
@@ -403,6 +419,19 @@ class ConfiguratorBuilder
     objects.map! { |object| object.ext(in_hash[:extension_object]) }
     
     return { :collection_test_fixture_extra_link_objects => objects }
+  end
+
+
+  private
+
+  def get_vendor_paths(in_hash)
+    vendor_paths = []
+    vendor_paths << FilePathUtils::form_ceedling_vendor_path(UNITY_LIB_PATH)
+    vendor_paths << FilePathUtils::form_ceedling_vendor_path(CEXCEPTION_LIB_PATH) if (in_hash[:project_use_exceptions])
+    vendor_paths << FilePathUtils::form_ceedling_vendor_path(CMOCK_LIB_PATH)      if (in_hash[:project_use_mocks])
+    vendor_paths << in_hash[:cmock_mock_path]                                     if (in_hash[:project_use_mocks])
+
+    return vendor_paths
   end
   
 end

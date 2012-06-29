@@ -1,5 +1,4 @@
-PROJECT_ROOT = File.expand_path(File.dirname(__FILE__))
-PROJECT_CEEDLING_ROOT = "#{PROJECT_ROOT}/vendor/ceedling"
+PROJECT_CEEDLING_ROOT = "vendor/ceedling"
 load "#{PROJECT_CEEDLING_ROOT}/lib/rakefile.rb"
 
 task :default => :run

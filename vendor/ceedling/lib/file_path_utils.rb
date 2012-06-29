@@ -29,7 +29,7 @@ class FilePathUtils
   end
 
   def self.os_executable_ext(executable)
-    return executable.ext('.exe') if SystemWrapper.is_windows?
+    return executable.ext('.exe') if SystemWrapper.windows?
     return executable
   end
 
@@ -107,6 +107,10 @@ class FilePathUtils
   def form_release_build_asm_objects_filelist(files)
     return (@file_wrapper.instantiate_file_list(files)).pathmap("#{@configurator.project_release_build_output_asm_path}/%n#{@configurator.extension_object}")
   end
+
+  def form_release_build_c_list_filepath(filepath)
+    return File.join( @configurator.project_release_build_output_c_path, File.basename(filepath).ext(@configurator.extension_list) )
+  end
   
   def form_release_dependencies_filelist(files)
     return (@file_wrapper.instantiate_file_list(files)).pathmap("#{@configurator.project_release_dependencies_path}/%n#{@configurator.extension_dependencies}")
@@ -143,6 +147,14 @@ class FilePathUtils
 
   def form_test_executable_filepath(filepath)
     return File.join( @configurator.project_test_build_output_path, File.basename(filepath).ext(@configurator.extension_executable) )    
+  end
+
+  def form_test_build_map_filepath(filepath)
+    return File.join( @configurator.project_test_build_output_path, File.basename(filepath).ext(@configurator.extension_map) )
+  end
+
+  def form_test_build_list_filepath(filepath)
+    return File.join( @configurator.project_test_build_output_path, File.basename(filepath).ext(@configurator.extension_list) )
   end
 
   def form_preprocessed_file_filepath(filepath)
