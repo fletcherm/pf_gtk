@@ -22,7 +22,7 @@ namespace :proto do
 
   desc "run proto"
   task :run do
-    sh "gcc #{gtk_flags} #{pcre_flags} proto/hello.c -o proto/hello"
+    sh "gcc proto/hello.c #{gtk_flags} #{pcre_flags} -o proto/hello"
     sh "proto/hello"
   end
 
