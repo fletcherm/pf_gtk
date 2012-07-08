@@ -50,6 +50,7 @@
     - TEST
 
 :cmock:
+  :mock_prefix: mock_
   :when_no_prototypes: :warn
   :enforce_strict_ordering: TRUE
   :includes:
@@ -82,16 +83,16 @@
     :executable: gcc
     :arguments:
       - -I"$": COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR
+      - -c ${1}
       - "#{`pkg-config --cflags gtk+-2.0`}"
       - "#{`pkg-config --cflags libpcre`}"
-      - -c ${1} 
       - -o ${2} 
   :test_linker: &linker_argz
     :executable: gcc
     :arguments: 
+      - ${1}
       - "#{`pkg-config --libs gtk+-2.0`}"
       - "#{`pkg-config --libs libpcre`}"
-      - ${1}
       - -o ${2} 
   :release_compiler: *compiler_argz
   :release_linker: *linker_argz
