@@ -33,9 +33,10 @@
     - vendor/bstring/
   :source:
     - src/**
-  :support:
     - vendor/bstring/
+  :support:
     - test/support
+    - vendor/bstring/
 
 :defines:
   # in order to add common defines:
