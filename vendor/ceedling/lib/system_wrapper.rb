@@ -3,13 +3,14 @@ require 'rbconfig'
 class SystemWrapper
 
   # static method for use in defaults
-  def self.is_windows?
+  def self.windows?
+    return ((RbConfig::CONFIG['host_os'] =~ /mswin|mingw/) ? true : false) if defined?(RbConfig)
     return ((Config::CONFIG['host_os'] =~ /mswin|mingw/) ? true : false)
   end
 
   # class method so as to be mockable for tests
-  def is_windows?
-    return SystemWrapper.is_windows?
+  def windows?
+    return SystemWrapper.windows?
   end
   
   def module_eval(string)
@@ -40,10 +41,18 @@ class SystemWrapper
     return Time.now.asctime
   end
 
-  def shell_execute(command)
+  def shell_backticks(command)
     return {
-      :output =>  `#{command}`,
-      :exit_code => ($?.exitstatus)
+      :output    => `#{command}`.freeze,
+      :exit_code => ($?.exitstatus).freeze
+    }
+  end
+
+  def shell_system(command)
+    system( command )
+    return {
+      :output    => ''.freeze,
+      :exit_code => ($?.exitstatus).freeze
     }
   end
   

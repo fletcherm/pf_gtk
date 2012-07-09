@@ -1,9 +1,22 @@
-require 'constants' # for Verbosity constants class
+require 'constants'
 
 
 class Generator
 
-  constructor :configurator, :preprocessinator, :cmock_builder, :generator_test_runner, :generator_test_results, :test_includes_extractor, :tool_executor, :file_finder, :file_path_utils, :streaminator, :plugin_manager, :file_wrapper
+  constructor :configurator,
+              :generator_helper,
+              :preprocessinator,
+              :cmock_builder,
+              :generator_test_runner,
+              :generator_test_results,
+              :flaginator,
+              :test_includes_extractor,
+              :tool_executor,
+              :file_finder,
+              :file_path_utils,
+              :streaminator,
+              :plugin_manager,
+              :file_wrapper
 
 
   def generate_shallow_includes_list(context, file)
@@ -18,30 +31,33 @@ class Generator
   def generate_dependencies_file(tool, context, source, object, dependencies)
     @streaminator.stdout_puts("Generating dependencies for #{File.basename(source)}...", Verbosity::NORMAL)
     
-    command_line = 
+    command = 
       @tool_executor.build_command_line(
         tool,
         source,
         dependencies,
         object)
     
-    @tool_executor.exec(command_line)
+    @tool_executor.exec( command[:line], command[:options] )
   end
 
   def generate_mock(context, header_filepath)
     arg_hash = {:header_file => header_filepath, :context => context}
-    @plugin_manager.pre_mock_execute(arg_hash)
+    @plugin_manager.pre_mock_generate( arg_hash )
     
-    @cmock_builder.cmock.setup_mocks( arg_hash[:header_file] )
-
-    @plugin_manager.post_mock_execute(arg_hash)
+    begin
+      @cmock_builder.cmock.setup_mocks( arg_hash[:header_file] )
+    rescue
+      raise
+    ensure
+      @plugin_manager.post_mock_generate( arg_hash )
+    end
   end
 
   # test_filepath may be either preprocessed test file or original test file
   def generate_test_runner(context, test_filepath, runner_filepath)
     arg_hash = {:context => context, :test_file => test_filepath, :runner_file => runner_filepath}
-
-    @plugin_manager.pre_runner_execute(arg_hash)
+    @plugin_manager.pre_runner_generate(arg_hash)
     
     # collect info we need
     module_name = File.basename(arg_hash[:test_file])
@@ -51,38 +67,55 @@ class Generator
     @streaminator.stdout_puts("Generating runner for #{module_name}...", Verbosity::NORMAL)
     
     # build runner file
-    @file_wrapper.open(runner_filepath, 'w') do |output|
-      @generator_test_runner.create_header(output, mock_list)
-      @generator_test_runner.create_externs(output, test_cases)
-      @generator_test_runner.create_mock_management(output, mock_list)
-      @generator_test_runner.create_runtest(output, mock_list, test_cases)
-      @generator_test_runner.create_main(output, module_name, test_cases)
+    begin
+      @generator_test_runner.generate(module_name, runner_filepath, test_cases, mock_list)
+    rescue
+      raise
+    ensure
+      @plugin_manager.post_runner_generate(arg_hash)    
     end
-
-    @plugin_manager.post_runner_execute(arg_hash)
   end
 
-  def generate_object_file(tool, context, source, object)    
-    arg_hash = {:tool => tool, :context => context, :source => source, :object => object}
+  def generate_object_file(tool, context, source, object, list='')    
+    shell_result = {}
+    arg_hash = {:tool => tool, :context => context, :source => source, :object => object, :list => list}
     @plugin_manager.pre_compile_execute(arg_hash)
 
     @streaminator.stdout_puts("Compiling #{File.basename(arg_hash[:source])}...", Verbosity::NORMAL)
-    shell_result = @tool_executor.exec( @tool_executor.build_command_line(arg_hash[:tool], arg_hash[:source], arg_hash[:object]) )
+    command =
+      @tool_executor.build_command_line( arg_hash[:tool],
+                                         arg_hash[:source],
+                                         arg_hash[:object],
+                                         arg_hash[:list],
+                                         @flaginator.flag_down( OPERATION_COMPILE_SYM, context, source ) )
 
-    arg_hash[:shell_result] = shell_result
-    @plugin_manager.post_compile_execute(arg_hash)
+    begin
+      shell_result = @tool_executor.exec( command[:line], command[:options] )
+    rescue ShellExecutionException => ex
+      shell_result = ex.shell_result
+      raise ''
+    ensure
+      arg_hash[:shell_result] = shell_result
+      @plugin_manager.post_compile_execute(arg_hash)
+    end
   end
 
-  def generate_executable_file(tool, context, objects, executable)
+  def generate_executable_file(tool, context, objects, executable, map='')
     shell_result = {}
-    arg_hash = {:tool => tool, :context => context, :objects => objects, :executable => executable}
+    arg_hash = {:tool => tool, :context => context, :objects => objects, :executable => executable, :map => map}
     @plugin_manager.pre_link_execute(arg_hash)
     
     @streaminator.stdout_puts("Linking #{File.basename(arg_hash[:executable])}...", Verbosity::NORMAL)
+    command =
+      @tool_executor.build_command_line( arg_hash[:tool],
+                                         arg_hash[:objects],
+                                         arg_hash[:executable],
+                                         arg_hash[:map],
+                                         @flaginator.flag_down( OPERATION_LINK_SYM, context, executable ) )
     
     begin
-      shell_result = @tool_executor.exec( @tool_executor.build_command_line(arg_hash[:tool], arg_hash[:objects], arg_hash[:executable]) )
-    rescue
+      shell_result = @tool_executor.exec( command[:line], command[:options] )
+    rescue ShellExecutionException => ex
       notice =    "\n" +
                   "NOTICE: If the linker reports missing symbols, the following may be to blame:\n" +
                   "  1. Test lacks #include statements corresponding to needed source files.\n" +
@@ -93,29 +126,29 @@ class Generator
       else
         notice += "\n"
       end
-               
+      
       @streaminator.stderr_puts(notice, Verbosity::COMPLAIN)
-      raise
+      shell_result = ex.shell_result
+      raise ''
+    ensure
+      arg_hash[:shell_result] = shell_result
+      @plugin_manager.post_link_execute(arg_hash)
     end
-    
-    arg_hash[:shell_result] = shell_result
-    @plugin_manager.post_link_execute(arg_hash)
   end
 
   def generate_test_results(tool, context, executable, result)
     arg_hash = {:tool => tool, :context => context, :executable => executable, :result_file => result}
-    @plugin_manager.pre_test_execute(arg_hash)
+    @plugin_manager.pre_test_fixture_execute(arg_hash)
     
     @streaminator.stdout_puts("Running #{File.basename(arg_hash[:executable])}...", Verbosity::NORMAL)
     
     # Unity's exit code is equivalent to the number of failed tests, so we tell @tool_executor not to fail out if there are failures
     # so that we can run all tests and collect all results
-    shell_result = @tool_executor.exec( @tool_executor.build_command_line(arg_hash[:tool], arg_hash[:executable]), [], {:boom => false} )
+    command = @tool_executor.build_command_line(arg_hash[:tool], arg_hash[:executable])
+    command[:options][:boom] = false
+    shell_result = @tool_executor.exec( command[:line], command[:options] )
     
-    if (shell_result[:output].nil? or shell_result[:output].strip.empty?)
-      @streaminator.stderr_puts("ERROR: Test executable \"#{File.basename(executable)}\" did not produce any results.", Verbosity::ERRORS)
-      raise
-    end
+    @generator_helper.test_results_error_handler(executable, shell_result)
     
     processed = @generator_test_results.process_and_write_results( shell_result,
                                                                    arg_hash[:result_file],
@@ -125,7 +158,7 @@ class Generator
     arg_hash[:results]      = processed[:results]
     arg_hash[:shell_result] = shell_result # for raw output display if no plugins for formatted display
     
-    @plugin_manager.post_test_execute(arg_hash)
+    @plugin_manager.post_test_fixture_execute(arg_hash)
   end
   
 end

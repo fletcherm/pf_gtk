@@ -1,5 +1,4 @@
-PROJECT_ROOT = File.expand_path(File.dirname(__FILE__))
-PROJECT_CEEDLING_ROOT = "#{PROJECT_ROOT}/vendor/ceedling"
+PROJECT_CEEDLING_ROOT = "vendor/ceedling"
 load "#{PROJECT_CEEDLING_ROOT}/lib/rakefile.rb"
 
 task :default => :run
@@ -23,7 +22,7 @@ namespace :proto do
 
   desc "run proto"
   task :run do
-    sh "gcc #{gtk_flags} #{pcre_flags} proto/hello.c -o proto/hello"
+    sh "gcc proto/hello.c #{gtk_flags} #{pcre_flags} -o proto/hello"
     sh "proto/hello"
   end
 

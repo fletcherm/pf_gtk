@@ -12,6 +12,7 @@ class CMockHeaderParser
     @funcs = []
     @c_strippables = cfg.strippables
     @c_attributes = (['const'] + cfg.attributes).uniq
+    @c_calling_conventions = cfg.c_calling_conventions.uniq
     @treat_as_void = (['void'] + cfg.treat_as_void).uniq
     @declaration_parse_matcher = /([\d\w\s\*\(\),\[\]]+??)\(([\d\w\s\*\(\),\.\[\]+-]*)\)$/m
     @standards = (['int','short','char','long','unsigned','signed'] + cfg.treat_as.keys).uniq
@@ -23,7 +24,7 @@ class CMockHeaderParser
   end
   
   def parse(name, source)
-    @module_name = name
+    @module_name = name.gsub(/\W/,'')
     @typedefs = []
     @funcs = []
     function_names = []
@@ -65,6 +66,9 @@ class CMockHeaderParser
     # remove assembler pragma sections
     source.gsub!(/^\s*#\s*pragma\s+asm\s+.*?#\s*pragma\s+endasm/m, '')
     
+    # remove gcc's __attribute__ tags
+    source.gsub(/__attrbute__\s*\(\(\.*\)\)/, '')
+    
     # remove preprocessor statements and extern "C" 
     source.gsub!(/^\s*#.*/, '')
     source.gsub!(/extern\s+\"C\"\s+\{/, '')
@@ -95,11 +99,11 @@ class CMockHeaderParser
     #split lines on semicolons and remove things that are obviously not what we are looking for
     src_lines = source.split(/\s*;\s*/)
     src_lines.delete_if {|line| line.strip.length == 0}                            # remove blank lines
-    src_lines.delete_if {|line| !(line =~ /\(\s*\*(?:.*\[\d*\])??\s*\)/).nil?}     #remove function pointer arrays
+    src_lines.delete_if {|line| !(line =~ /[\w\s\*]+\(+\s*\*[\*\s]*[\w\s]+(?:\[[\w\s]*\]\s*)+\)+\s*\((?:[\w\s\*]*,?)*\s*\)/).nil?}     #remove function pointer arrays
     if (@treat_externs == :include)
-      src_lines.delete_if {|line| !(line =~ /(?:^|\s+)(?:inline)\s+/).nil?}        #remove inline functions
+      src_lines.delete_if {|line| !(line =~ /(?:^|\s+)(?:inline)\s+/).nil?}        # remove inline functions
     else
-      src_lines.delete_if {|line| !(line =~ /(?:^|\s+)(?:extern|inline)\s+/).nil?} #remove inline and extern functions
+      src_lines.delete_if {|line| !(line =~ /(?:^|\s+)(?:extern|inline)\s+/).nil?} # remove inline and extern functions
     end
   end
 
@@ -149,7 +153,8 @@ class CMockHeaderParser
       arg_list.gsub!(/\*(\w)/,'* \1')                       # pull asterisks away from arg to place asterisks with type (where they belong)
       
       #scan argument list for function pointers and replace them with custom types
-      arg_list.gsub!(/([\w\s]+)\(*\(\s*\*([\w\s\*]+)\)\s*\(([\w\s\*,]*)\)\)*/) do |m|
+      arg_list.gsub!(/([\w\s\*]+)\(+\s*\*[\*\s]*([\w\s]*)\s*\)+\s*\(((?:[\w\s\*]*,?)*)\s*\)*/) do |m|
+
         functype = "cmock_#{@module_name}_func_ptr#{@typedefs.size + 1}"
         funcret  = $1.strip
         funcname = $2.strip
@@ -200,6 +205,8 @@ class CMockHeaderParser
     descriptors[0..-2].each do |word|
       if @c_attributes.include?(word)
         decl[:modifier] << word
+      elsif @c_calling_conventions.include?(word)
+        decl[:c_calling_convention] = word
       else
         rettype << word
       end

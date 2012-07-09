@@ -14,8 +14,9 @@ class CMockConfig
     :plugins                  => [],
     :strippables              => ['(?:__attribute__\s*\(+.*?\)+)'],
     :attributes               => ['__ramfunc', '__irq', '__fiq', 'register', 'extern'],
+    :c_calling_conventions    => ['__stdcall', '__cdecl', '__fastcall'],
     :enforce_strict_ordering  => false,
-    :unity_helper             => false,
+    :unity_helper_path        => false,
     :treat_as                 => {},
     :treat_as_void            => [],
     :memcmp_if_unknown        => true,
@@ -30,7 +31,7 @@ class CMockConfig
     :includes_h_pre_orig_header  => nil, 
     :includes_h_post_orig_header => nil, 
     :includes_c_pre_header       => nil, 
-    :includes_c_post_header      => nil, 
+    :includes_c_post_header      => nil
   }
   
   def initialize(options=nil)
@@ -54,10 +55,15 @@ class CMockConfig
         puts "WARNING: :#{opt.to_s} should be an array." unless (options[:verbosity] < 1)
       end
     end
+    options[:unity_helper_path] ||= options[:unity_helper]
     options[:plugins].compact!
     options[:plugins].map! {|p| p.to_sym}
     @options = options
-    @options[:treat_as].merge!(standard_treat_as_map)
+    
+    treat_as_map = standard_treat_as_map()#.clone
+    treat_as_map.merge!(@options[:treat_as])
+    @options[:treat_as] = treat_as_map
+    
     @options.each_key { |key| eval("def #{key.to_s}() return @options[:#{key.to_s}] end") }
   end
   
@@ -72,7 +78,7 @@ class CMockConfig
   end
   
   def load_unity_helper
-    return File.new(@options[:unity_helper]).read if (@options[:unity_helper])
+    return File.new(@options[:unity_helper_path]).read if (@options[:unity_helper_path])
     return nil
   end
 
@@ -117,7 +123,7 @@ class CMockConfig
       'cstring'         => 'STRING',
       'CSTRING'         => 'STRING',
       'float'           => 'FLOAT',
-      'double'          => 'FLOAT',
+      'double'          => 'FLOAT'
     }
   end
 end

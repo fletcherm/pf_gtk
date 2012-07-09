@@ -160,11 +160,9 @@ class CMockGenerator
   
   def create_mock_implementation(file, function)        
     # prepare return value and arguments       
-    if (function[:modifier].empty?)
-      function_mod_and_rettype = function[:return][:type] 
-    else
-      function_mod_and_rettype = function[:modifier] + ' ' + function[:return][:type] 
-    end
+    function_mod_and_rettype = (function[:modifier].empty? ? '' : "#{function[:modifier]} ") +
+                               (function[:return][:type]) +
+                               (function[:c_calling_convention] ? " #{function[:c_calling_convention]}" : '')
     args_string = function[:args_string]
     args_string += (", " + function[:var_arg]) unless (function[:var_arg].nil?)
     
@@ -179,9 +177,9 @@ class CMockGenerator
     file << "  cmock_line = cmock_call_instance->LineNumber;\n"
     if (@ordered)
       file << "  if (cmock_call_instance->CallOrder > ++GlobalVerifyOrder)\n"
-      file << "    UNITY_TEST_FAIL(cmock_line, \"Function '#{function[:name]}' called earlier than expected.\");"
+      file << "    UNITY_TEST_FAIL(cmock_line, \"Function '#{function[:name]}' called earlier than expected.\");\n"
       file << "  if (cmock_call_instance->CallOrder < GlobalVerifyOrder)\n"
-      file << "    UNITY_TEST_FAIL(cmock_line, \"Function '#{function[:name]}' called later than expected.\");"
+      file << "    UNITY_TEST_FAIL(cmock_line, \"Function '#{function[:name]}' called later than expected.\");\n"
       # file << "  UNITY_TEST_ASSERT((cmock_call_instance->CallOrder == ++GlobalVerifyOrder), cmock_line, \"Out of order function calls. Function '#{function[:name]}'\");\n"
     end
     file << @plugins.run(:mock_implementation, function)

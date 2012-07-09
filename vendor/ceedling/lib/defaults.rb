@@ -4,151 +4,167 @@ require 'file_path_utils'
 
 
 DEFAULT_TEST_COMPILER_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_test_compiler',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_test_compiler'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR'},
-    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'},
-    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'},
-    "-DGNU_COMPILER",
-    {"$" => 'TEST_COMPILER_ARGUMENTS'},
-    "-c \"${1}\"",
-    "-o \"${2}\"",
-    ]
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR'}.freeze,
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'}.freeze,
+    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'}.freeze,
+    "-DGNU_COMPILER".freeze,
+    "-c \"${1}\"".freeze,
+    "-o \"${2}\"".freeze,
+    # gcc's list file output options are complex; no use of ${3} parameter in default config    
+    ].freeze
   }
 
 DEFAULT_TEST_LINKER_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_test_linker',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_test_linker'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"$" => 'TEST_LINKER_ARGUMENTS'},
-    "\"${1}\"",
-    "-o \"${2}\"",
-    ]
+    "\"${1}\"".freeze,
+    "-o \"${2}\"".freeze,
+    ].freeze
   }
   
 DEFAULT_TEST_FIXTURE_TOOL = {
-  :executable => '${1}',
-  :name => 'default_test_fixture',
-  :stderr_redirect => StdErrRedirect::AUTO,
-  :arguments => [
-    {"$" => 'TEST_FIXTURE_ARGUMENTS'},
-    ]
+  :executable => '${1}'.freeze,
+  :name => 'default_test_fixture'.freeze,
+  :stderr_redirect => StdErrRedirect::AUTO.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
+  :arguments => [].freeze
   }
 
 
 
 DEFAULT_TEST_INCLUDES_PREPROCESSOR_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('cpp'),
-  :name => 'default_test_includes_preprocessor',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('cpp').freeze,
+  :name => 'default_test_includes_preprocessor'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    '-MM', '-MG',
+    '-MM'.freeze,
+    '-MG'.freeze,
     # avoid some possibility of deep system lib header file complications by omitting vendor paths
     # if cpp is run on *nix system, escape spaces in paths; if cpp on windows just use the paths collection as is
-    {"-I\"$\"" => "{SystemWrapper.is_windows? ? COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE : COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE.map{|path| path.gsub(\/ \/, \'\\\\ \') }}"},
-    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'},
-    {"-D$" => 'DEFINES_TEST_PREPROCESS'},
-    "-DGNU_PREPROCESSOR",
-    {"$" => 'TEST_INCLUDES_PREPROCESSOR_ARGUMENTS'},
-    '-w',
-    '-nostdinc',
-    "\"${1}\""
-    ]
+    {"-I\"$\"" => "{SystemWrapper.windows? ? COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE : COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE.map{|path| path.gsub(\/ \/, \'\\\\ \') }}"}.freeze,
+    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'}.freeze,
+    {"-D$" => 'DEFINES_TEST_PREPROCESS'}.freeze,
+    "-DGNU_PREPROCESSOR".freeze,
+    '-w'.freeze,
+    '-nostdinc'.freeze,
+    "\"${1}\"".freeze
+    ].freeze
   }
 
 DEFAULT_TEST_FILE_PREPROCESSOR_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_test_file_preprocessor',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_test_file_preprocessor'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    '-E',
-    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR'},
-    {"-I\"$\"" => 'PATHS_TEST_TOOLCHAIN_INCLUDE'},
-    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'},
-    {"-D$" => 'DEFINES_TEST_PREPROCESS'},
-    "-DGNU_PREPROCESSOR",
-    {"$" => 'TEST_FILE_PREPROCESSOR_ARGUMENTS'},
-    "\"${1}\"",
-    "-o \"${2}\""
-    ]
+    '-E'.freeze,
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR'}.freeze,
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'}.freeze,
+    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'}.freeze,
+    {"-D$" => 'DEFINES_TEST_PREPROCESS'}.freeze,
+    "-DGNU_PREPROCESSOR".freeze,
+    "\"${1}\"".freeze,
+    "-o \"${2}\"".freeze
+    ].freeze
   }
 
 DEFAULT_TEST_DEPENDENCIES_GENERATOR_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_test_dependencies_generator',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_test_dependencies_generator'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR'},
-    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'},
-    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'},   
-    {"-D$" => 'DEFINES_TEST_PREPROCESS'},     
-    "-DGNU_PREPROCESSOR",
-    "-MT \"${3}\"",
-    '-MM', '-MD', '-MG',
-    "-MF \"${2}\"",
-    {"$" => 'TEST_DEPENDENCIES_GENERATOR_ARGUMENTS'},
-    "-c \"${1}\"",
-    ]
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_SUPPORT_SOURCE_INCLUDE_VENDOR'}.freeze,
+    {"-I\"$\"" => 'COLLECTION_PATHS_TEST_TOOLCHAIN_INCLUDE'}.freeze,
+    {"-D$" => 'COLLECTION_DEFINES_TEST_AND_VENDOR'}.freeze, 
+    {"-D$" => 'DEFINES_TEST_PREPROCESS'}.freeze,     
+    "-DGNU_PREPROCESSOR".freeze,
+    "-MT \"${3}\"".freeze,
+    '-MM'.freeze,
+    '-MD'.freeze,
+    '-MG'.freeze,
+    "-MF \"${2}\"".freeze,
+    "-c \"${1}\"".freeze,
+    ].freeze
   }
 
 DEFAULT_RELEASE_DEPENDENCIES_GENERATOR_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_release_dependencies_generator',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_release_dependencies_generator'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_AND_INCLUDE'},
-    {"-I\"$\"" => 'COLLECTION_PATHS_RELEASE_TOOLCHAIN_INCLUDE'},
-    {"-D$" => 'COLLECTION_DEFINES_RELEASE_AND_VENDOR'},
-    {"-D$" => 'DEFINES_RELEASE_PREPROCESS'},
-    "-DGNU_PREPROCESSOR",
-    "-MT \"${3}\"",
-    '-MM', '-MD', '-MG',
-    "-MF \"${2}\"",
-    {"$" => 'RELEASE_DEPENDENCIES_GENERATOR_ARGUMENTS'},
-    "-c \"${1}\"",
-    ]
+    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_INCLUDE_VENDOR'}.freeze,
+    {"-I\"$\"" => 'COLLECTION_PATHS_RELEASE_TOOLCHAIN_INCLUDE'}.freeze,
+    {"-D$" => 'COLLECTION_DEFINES_RELEASE_AND_VENDOR'}.freeze,
+    {"-D$" => 'DEFINES_RELEASE_PREPROCESS'}.freeze,
+    "-DGNU_PREPROCESSOR".freeze,
+    "-MT \"${3}\"".freeze,
+    '-MM'.freeze,
+    '-MD'.freeze,
+    '-MG'.freeze,
+    "-MF \"${2}\"".freeze,
+    "-c \"${1}\"".freeze,
+    ].freeze
   }
 
 
 DEFAULT_RELEASE_COMPILER_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_release_compiler',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_release_compiler'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_INCLUDE_VENDOR'},
-    {"-I\"$\"" => 'COLLECTION_PATHS_RELEASE_TOOLCHAIN_INCLUDE'},
-    {"-D$" => 'COLLECTION_DEFINES_RELEASE_AND_VENDOR'},        
-    "-DGNU_COMPILER",
-    {"$" => 'RELEASE_COMPILER_ARGUMENTS'},
-    "-c \"${1}\"",
-    "-o \"${2}\"",
-    ]
+    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_INCLUDE_VENDOR'}.freeze,
+    {"-I\"$\"" => 'COLLECTION_PATHS_RELEASE_TOOLCHAIN_INCLUDE'}.freeze,
+    {"-D$" => 'COLLECTION_DEFINES_RELEASE_AND_VENDOR'}.freeze,
+    "-DGNU_COMPILER".freeze,
+    "-c \"${1}\"".freeze,
+    "-o \"${2}\"".freeze,
+    # gcc's list file output options are complex; no use of ${3} parameter in default config    
+    ].freeze
   }
 
 DEFAULT_RELEASE_ASSEMBLER_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('as'),
-  :name => 'default_release_assembler',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('as').freeze,
+  :name => 'default_release_assembler'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_AND_INCLUDE'},
-    {"$" => 'RELEASE_ASSEMBLER_ARGUMENTS'},
-    "\"${1}\"",
-    "-o \"${2}\"",
-    ]
+    {"-I\"$\"" => 'COLLECTION_PATHS_SOURCE_AND_INCLUDE'}.freeze,
+    "\"${1}\"".freeze,
+    "-o \"${2}\"".freeze,
+    ].freeze
   }
 
 DEFAULT_RELEASE_LINKER_TOOL = {
-  :executable => FilePathUtils.os_executable_ext('gcc'),
-  :name => 'default_release_linker',
-  :stderr_redirect => StdErrRedirect::NONE,
+  :executable => FilePathUtils.os_executable_ext('gcc').freeze,
+  :name => 'default_release_linker'.freeze,
+  :stderr_redirect => StdErrRedirect::NONE.freeze,
+  :background_exec => BackgroundExec::NONE.freeze,
+  :optional => false.freeze,
   :arguments => [
-    {"$" => 'RELEASE_LINKER_ARGUMENTS'},
-    "\"${1}\"",
-    "-o \"${2}\"",
-    ]
+    "\"${1}\"".freeze,
+    "-o \"${2}\"".freeze,
+    ].freeze
   }
 
   
@@ -201,8 +217,10 @@ DEFAULT_CEEDLING_CONFIG = {
       # :build_root must be set by user
       :use_exceptions => true,
       :use_mocks => true,
+      :compile_threads => 1,
+      :test_threads => 1,
       :use_test_preprocessor => false,
-      :use_auxiliary_dependencies => false,
+      :use_deep_dependencies => false,
       :test_file_prefix => 'test_',
       :options_paths => [],
       :release_build => false,
@@ -210,7 +228,8 @@ DEFAULT_CEEDLING_CONFIG = {
 
     :release_build => {
       # :output is set while building configuration -- allows smart default system-dependent file extension handling
-      :use_assembly => false,      
+      :use_assembly => false,
+      :artifacts => [],
     },
 
     :paths => {
@@ -220,6 +239,14 @@ DEFAULT_CEEDLING_CONFIG = {
       :include => [],
       :test_toolchain_include => [],
       :release_toolchain_include => [],
+    },
+    
+    :files => {
+      :test => [],
+      :source => [],
+      :assembly => [],
+      :support => [],
+      :include => [],
     },
     
     # unlike other top-level entries, environment's value is an array to preserve order
@@ -235,12 +262,16 @@ DEFAULT_CEEDLING_CONFIG = {
       :release_preprocess => [],
     },
     
+    :flags => {},
+    
     :extension => {
       :header => '.h',
       :source => '.c',
       :assembly => '.s',
       :object => '.o',
-      :executable => ( SystemWrapper.is_windows? ? '.exe' : '.out' ),
+      :executable => ( SystemWrapper.windows? ? EXTENSION_WIN_EXE : EXTENSION_NONWIN_EXE ),
+      :map => '.map',
+      :list => '.lst',
       :testpass => '.pass',
       :testfail => '.fail',
       :dependencies => '.d',
@@ -286,7 +317,7 @@ DEFAULT_CEEDLING_CONFIG = {
       :load_paths => [],
       :enabled => [],
     }
-  }
+  }.freeze
 
   
 DEFAULT_TESTS_RESULTS_REPORT_TEMPLATE = %q{

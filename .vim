@@ -1,1 +1,2 @@
-let g:vim_ignore = [ "doc", "log", "vendor", ".git", ".bundle", "build" ]
+let g:vim_ignore = [ '.bundle', '.git', 'build', 'doc', 'log', 'tags', 'vendor' ]
+set wildignore+=.bundle,.git,build,doc,log,tags,vendor
